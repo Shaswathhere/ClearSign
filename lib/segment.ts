@@ -35,20 +35,23 @@ export function segmentDocument(rawText: string): Clause[] {
     return [];
   }
 
-  // Regex pattern matching start of potential new clauses/sections
-  // Matches:
+  // Regex pattern matching start of potential new clauses/sections:
   // - Double newlines: \n\s*\n
-  // - Headings: \n(?=(?:[0-9]+[\.\)]|\([a-zA-Z0-9]+\)|(?:Clause|Article|Section)\s+[0-9A-Za-z]+)\s+)
-  // - All caps titles on a new line
-  const headingPattern = /(?:\n\s*\n|\n(?=(?:[0-9]+[.)]|\([a-zA-Z0-9]+\)|(?:Clause|Article|Section|Schedule)\s+[0-9A-Za-z]+|[A-Z\s]{4,}:?\n)))/gi;
+  // - Numbered clauses like 1., 1.1, 3.3, 10.2, (a), (1), Clause 7, Article 3, Section 2
+  //   preceded by \n, sentence end (.\s+), or multiple spaces (\s{2,})
+  const headingPattern = /(?:\n\s*\n|(?:\n|\.\s+|\s{2,})(?=([0-9]+(?:\.[0-9]+)+|[0-9]+[.)]|\([a-zA-Z0-9]+\)|(?:Clause|Article|Section|Schedule)\s+[0-9A-Za-z]+)\s+))/gi;
 
   const splitPoints = new Set<number>([0, text.length]);
   let match: RegExpExecArray | null;
 
   while ((match = headingPattern.exec(text)) !== null) {
-    // If the match is a newline sequence, split at the end of the whitespace separator
-    // or right before the heading
-    const splitIndex = match.index === 0 ? 0 : match.index;
+    const full = match[0];
+    let splitIndex = match.index;
+    if (full.startsWith("\n")) {
+      splitIndex = match.index;
+    } else {
+      splitIndex = match.index + full.length;
+    }
     if (splitIndex > 0 && splitIndex < text.length) {
       splitPoints.add(splitIndex);
     }
@@ -70,21 +73,22 @@ export function segmentDocument(rawText: string): Clause[] {
     return [{ id: "C1", start: 0, end: text.length, text }];
   }
 
-  // Pass 1: Merge short fragments (<40 chars) into previous slice to avoid tiny stray clauses
+  // Pass 1: Only merge tiny whitespace or fragment slices (< 15 chars) into preceding slice
+  // Do not merge distinct headings or numbered clauses
   const mergedSlices: { start: number; end: number }[] = [];
   for (let i = 0; i < rawSlices.length; i++) {
     const current = rawSlices[i];
     const sliceLen = current.end - current.start;
+    const sliceText = text.slice(current.start, current.end).trim();
 
-    if (sliceLen < 40 && mergedSlices.length > 0) {
-      // Merge into previous slice by extending its end
+    if ((sliceText.length === 0 || (sliceLen < 15 && !/^[0-9]+(?:\.[0-9]+)*[.)]?\s+[A-Za-z]/.test(sliceText))) && mergedSlices.length > 0) {
       mergedSlices[mergedSlices.length - 1].end = current.end;
     } else {
       mergedSlices.push({ ...current });
     }
   }
 
-  // Pass 2: Split slices over ~1200 characters at sentence boundaries (. ! ? followed by space/newline)
+  // Pass 2: Split oversize slices (>1200 chars) strictly at sentence boundaries (. ! ? followed by space/newline)
   const finalSlices: { start: number; end: number }[] = [];
   const MAX_CLAUSE_LEN = 1200;
 
@@ -105,9 +109,9 @@ export function segmentDocument(rawText: string): Clause[] {
         // Break after the punctuation mark + space
         breakOffset = Math.max(0, sub.length - 400) + sentenceMatch + 2;
       } else {
-        // Fallback to last newline or space
+        // Fallback to last space (never cut mid-word or mid-sentence)
         const lastSpace = sub.lastIndexOf(" ");
-        breakOffset = lastSpace > 400 ? lastSpace + 1 : windowEnd - curStart;
+        breakOffset = lastSpace > 200 ? lastSpace + 1 : windowEnd - curStart;
       }
 
       const curEnd = curStart + breakOffset;

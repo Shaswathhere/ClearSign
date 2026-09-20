@@ -281,6 +281,17 @@ function ResultsContent() {
         </div>
       </div>
 
+      {/* Fallback Banner */}
+      {result.engine === "rules-only" && (
+        <div
+          id="rules-fallback-banner"
+          className="flex items-center gap-2.5 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-xs font-semibold text-amber-800 shadow-xs dark:border-amber-800/60 dark:bg-amber-950/40 dark:text-amber-300"
+        >
+          <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+          <span>AI analysis unavailable, showing rule-based results</span>
+        </div>
+      )}
+
       {/* Verdict card */}
       <VerdictCard
         score={result.score}

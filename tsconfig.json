@@ -30,5 +30,14 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules",
+    "scripts/test_strict_schema.ts",
+    "scripts/test_qwen.ts",
+    "scripts/test_analyze_flow.ts",
+    "scripts/test_segment.ts",
+    "scripts/test_expand_quote.ts",
+    "scripts/test_rules_gym.ts",
+    "scripts/print_clauses.ts"
+  ]
 }

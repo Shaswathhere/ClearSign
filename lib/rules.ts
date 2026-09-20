@@ -1,7 +1,7 @@
 /**
  * lib/rules.ts
- * Deterministic regex-based rule engine implementing all 16 contract trap rules
- * per ClearSign PRD Section 13.2.
+ * Deterministic regex-based rule engine implementing contract trap rules
+ * per ClearSign PRD Section 13.2 with specialized enhancements for consumer agreements.
  */
 
 import { Category, Severity, Trap } from "./schema";
@@ -27,7 +27,8 @@ export const CONTRACT_RULES: RuleDefinition[] = [
     name: "Auto-renewal",
     category: "auto_renewal",
     severity: "high",
-    pattern: /auto(?:matically)?[- ]?renew|renews?(?:\s+automatically)?|evergreen/i,
+    // Require auto-renew wording; never match bare "Renewal Term" in definitions
+    pattern: /\b(?:auto(?:matically)?[- ]?renew(?:s|ed|ing|al)?|renew(?:s|ed|ing|al)?\s+automatically|automatically\s+renew(?:s|ed|ing|al)?|evergreen\s+clause)\b/i,
     whyTemplate: "This contract automatically renews unless you take specific action to stop it.",
     actionTemplate: "Mark the non-renewal deadline on your calendar.",
   },
@@ -45,7 +46,7 @@ export const CONTRACT_RULES: RuleDefinition[] = [
     name: "Non-refundable / Forfeit",
     category: "refund_deposit",
     severity: "high",
-    pattern: /non[- ]?refundable|no refund|forfeit/i,
+    pattern: /non[- ]?refundable|no refunds?(?:\s+shall\s+be\s+made|\s+will\s+be\s+made)?|forfeit/i,
     whyTemplate: "Money paid under this clause cannot be recovered under any circumstances.",
     actionTemplate: "Negotiate pro-rata refund terms in writing before signing.",
   },
@@ -108,7 +109,7 @@ export const CONTRACT_RULES: RuleDefinition[] = [
     name: "Data Sharing & Marketing",
     category: "data_privacy",
     severity: "medium",
-    pattern: /share (?:your )?(?:data|information) with|sell (?:your )?(?:data|personal)|marketing purposes|third[- ]part(?:y|ies)/i,
+    pattern: /share (?:your )?(?:personal )?(?:data|information) with|sharing the member['’]s personal data|marketing purposes|third[- ]part(?:y|ies)|do-not-disturb/i,
     whyTemplate: "Your personal, contact, or financial information may be shared with external third parties.",
     actionTemplate: "Ask if you can opt out of third-party marketing and data sharing.",
   },
@@ -117,7 +118,7 @@ export const CONTRACT_RULES: RuleDefinition[] = [
     name: "Deposit Deductions",
     category: "refund_deposit",
     severity: "high",
-    pattern: /deduct(?:ed|ion)? from (?:the )?(?:security )?deposit|forfeit(?:ed)? (?:the )?deposit/i,
+    pattern: /deduct(?:ed|ion)? from (?:the )?(?:security )?deposit|forfeit(?:ed)? (?:the )?deposit|as determined by the (?:company|landlord|lender)|subject to deductions.*as determined/i,
     whyTemplate: "The landlord or vendor can deduct expenses from your deposit at their own judgment.",
     actionTemplate: "Insist on joint inspection and receipt-backed deductions before move-out.",
   },
@@ -159,19 +160,80 @@ export const CONTRACT_RULES: RuleDefinition[] = [
   },
   {
     id: "R16",
-    name: "Exclusion / Waiting Period",
+    name: "Exclusion / Claim Window",
     category: "exclusion_coverage",
     severity: "medium",
-    pattern: /exclusion|not covered|waiting period|pre-existing|co-?payment|sub-?limit/i,
-    whyTemplate: "Specific conditions or incidents are excluded from coverage or require waiting periods.",
-    actionTemplate: "Review the exclusions list carefully against your personal requirements.",
+    pattern: /exclusion|not covered|waiting period|pre-existing|co-?payment|sub-?limit|deemed to have been waived|within\s+(?:\d+|seven)\s+days.*(?:waived|deemed)/i,
+    whyTemplate: "Specific conditions or claims have short deadlines or are excluded from coverage.",
+    actionTemplate: "Review time windows and exclusions carefully against your requirements.",
+  },
+  {
+    id: "R17",
+    name: "Facility Closure / Reduction",
+    category: "unilateral_change",
+    severity: "high",
+    pattern: /(?:relocate,?\s+close|close\s+or\s+reduce|fees remain payable.*during.*closure|closure\s+of\s+up\s+to\s+\d+\s+days)/i,
+    whyTemplate: "The company can close or reduce facilities for extended periods without refund or credit.",
+    actionTemplate: "Request pro-rata credit or membership extension during prolonged facility closures.",
+  },
+  {
+    id: "R18",
+    name: "Termination in Company Opinion",
+    category: "unilateral_change",
+    severity: "high",
+    pattern: /(?:suspend or terminate.*immediately and without refund|in its opinion,?\s+the (?:member|tenant|borrower)\s+has breached)/i,
+    whyTemplate: "The company can terminate the agreement immediately without refund based solely on its own opinion.",
+    actionTemplate: "Ask for objective violation criteria and written notice with an opportunity to remedy.",
+  },
+  {
+    id: "R19",
+    name: "Amendment by Notice",
+    category: "unilateral_change",
+    severity: "high",
+    pattern: /amend this agreement.*by displaying a notice|continued use.*constitute acceptance/i,
+    whyTemplate: "Terms can be changed unilaterally by displaying a notice; continuing to use the service binds you to the new terms.",
+    actionTemplate: "Require affirmative written or digital consent for any contractual amendments.",
   },
 ];
 
 /**
- * Extracts a complete sentence containing the match to serve as an exact quote.
+ * Strips section headings and numbers from the start of a quote.
  */
-function extractSentenceAroundMatch(text: string, matchIndex: number): string {
+export function stripSectionHeadings(s: string): string {
+  let cleaned = s.trim();
+  // Strip leading like: "4. RENEWAL, CANCELLATION AND TERMINATION  4.1   "
+  cleaned = cleaned.replace(/^[0-9]+\.\s+[A-Z\s,–—]{4,}(?:\s+[0-9]+(?:\.[0-9]+)*\s+)?/, "");
+  // Strip leading clause numbers like: "4.2   ", "2.3   ", "(a)   "
+  cleaned = cleaned.replace(/^(?:[0-9]+(?:\.[0-9]+)+|[0-9]+[.)]|\([a-zA-Z0-9]+\))\s+/, "");
+  return cleaned.trim();
+}
+
+/**
+ * Checks if a line looks like a table row (e.g. contains fee tabular data)
+ * so we never quote a raw table row as a finding's evidence.
+ */
+function isTableRow(line: string): boolean {
+  if (/(?:Joining Fee|Membership Fee|Amenities Fee|Locker Deposit|Total payable)\s+[₹$]/i.test(line)) {
+    return true;
+  }
+  const parts = line.split(/\s{2,}|\t/);
+  return parts.length >= 3 && parts.some((p) => /[₹$€£]\s*[0-9]/.test(p));
+}
+
+/**
+ * Extracts a complete sentence containing the match to serve as an exact quote.
+ * Expands to full sentence, strips headings, max 400 chars, never cuts mid-word.
+ */
+function extractSentenceAroundMatch(text: string, matchIndex: number): string | null {
+  // Find line of match to check if it's a table row
+  const lineStart = Math.max(0, text.lastIndexOf("\n", matchIndex));
+  const lineEnd = text.indexOf("\n", matchIndex);
+  const currentLine = text.slice(lineStart, lineEnd === -1 ? text.length : lineEnd).trim();
+
+  if (isTableRow(currentLine)) {
+    return null;
+  }
+
   // Find start of sentence (or beginning of clause)
   const prevPeriod = Math.max(
     text.lastIndexOf(". ", matchIndex),
@@ -194,19 +256,37 @@ function extractSentenceAroundMatch(text: string, matchIndex: number): string {
     sentenceEnd = nextNewline;
   }
 
-  const sentence = text.slice(sentenceStart, sentenceEnd).trim();
-  if (sentence.length >= 20 && sentence.length <= 400) {
-    return sentence;
+  let sentence = text.slice(sentenceStart, sentenceEnd).trim();
+  sentence = stripSectionHeadings(sentence);
+
+  if (sentence.length < 20) {
+    // If stripped sentence is too short, try expanding to the full clause text (stripped)
+    sentence = stripSectionHeadings(text);
   }
 
-  // Fallback: take a 20-300 char slice around matchIndex
-  const safeStart = Math.max(0, matchIndex - 20);
-  const safeEnd = Math.min(text.length, matchIndex + 180);
-  return text.slice(safeStart, safeEnd).trim();
+  if (sentence.length <= 400) {
+    return sentence.length >= 20 ? sentence : null;
+  }
+
+  // Max 400 chars, never cut mid-word
+  const lastSpace = sentence.lastIndexOf(" ", 400);
+  const safeEnd = lastSpace > 100 ? lastSpace : 400;
+  return sentence.slice(0, safeEnd).trim();
 }
 
 /**
- * Executes all 16 rules across the segmented clauses.
+ * Checks if clause is a pure definition clause (e.g. 1.1 "Club" means..., "Term" means...)
+ */
+function isDefinitionClause(clauseText: string): boolean {
+  const norm = clauseText.trim();
+  if (/^1\.(?:1|0)\b/i.test(norm) || /\bmeans the (?:Initial )?Term\b/i.test(norm)) {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Executes all rules across the segmented clauses.
  * Returns candidate traps and hints for the LLM.
  */
 export function runRuleEngine(clauses: Clause[]): {
@@ -219,6 +299,11 @@ export function runRuleEngine(clauses: Clause[]): {
 
   for (const clause of clauses) {
     for (const rule of CONTRACT_RULES) {
+      // R1 must not match definitions
+      if (rule.category === "auto_renewal" && isDefinitionClause(clause.text)) {
+        continue;
+      }
+
       const match = rule.pattern.exec(clause.text);
       if (match) {
         const comboKey = `${clause.id}:${rule.category}`;
@@ -227,7 +312,7 @@ export function runRuleEngine(clauses: Clause[]): {
           hints.push({ clauseId: clause.id, category: rule.category });
 
           const quote = extractSentenceAroundMatch(clause.text, match.index);
-          if (quote.length >= 20) {
+          if (quote && quote.length >= 20) {
             traps.push({
               clauseId: clause.id,
               quote,

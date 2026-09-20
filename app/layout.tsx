@@ -86,7 +86,7 @@ export default function RootLayout({
                   borderColor: "var(--brand-200)",
                 }}>
                 <span className="h-1.5 w-1.5 rounded-full animate-pulse" style={{ background: "#4ade80" }} />
-                Zero storage · 100% verified
+                Zero storage · Every quote verified
               </span>
               <ThemeToggle />
             </div>
@@ -105,7 +105,7 @@ export default function RootLayout({
             Reading aid, not legal advice. For important decisions, consult a qualified professional.
           </p>
           <p>
-            ClearSign does not store your documents. All analysis is verified word-for-word against the source text.
+            Every quoted clause is verified word-for-word against your document.
           </p>
         </footer>
       </body>

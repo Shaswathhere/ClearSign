@@ -7,47 +7,108 @@
       "docType": "subscription",
       "plantedTraps": [
         {
-          "category": "refund_deposit",
-          "severity": "high",
-          "quoteSnippet": "joining fee and all subscription fees paid are non-refundable"
-        },
-        {
-          "category": "auto_renewal",
-          "severity": "high",
-          "quoteSnippet": "automatically renew for successive consecutive terms of twelve (12) months"
-        },
-        {
-          "category": "lock_in_termination",
-          "severity": "high",
-          "quoteSnippet": "must be submitted exclusively via physical Registered Post or Speed Post"
-        },
-        {
+          "clause": "2.3",
           "category": "unilateral_change",
           "severity": "high",
-          "quoteSnippet": "reserves the right to change, modify, increase membership fees"
+          "quoteSnippet": "fees remain payable in full during any closure of up to ninety (90) days"
         },
         {
-          "category": "data_privacy",
+          "clause": "3.3",
+          "category": "penalty_fee",
+          "severity": "high",
+          "quoteSnippet": "penal interest at three per cent (3%) per month, compounded monthly"
+        },
+        {
+          "clause": "3.4",
+          "category": "unilateral_change",
+          "severity": "high",
+          "quoteSnippet": "revise the Membership Fee, the Amenities Fee and any other charge at any time, at its sole discretion and without prior notice"
+        },
+        {
+          "clause": "4.1",
+          "category": "auto_renewal",
+          "severity": "high",
+          "quoteSnippet": "renew automatically for successive periods of twelve (12) months each"
+        },
+        {
+          "clause": "4.2",
+          "category": "lock_in_termination",
+          "severity": "high",
+          "quoteSnippet": "registered post or speed post only"
+        },
+        {
+          "clause": "4.3",
+          "category": "unilateral_change",
+          "severity": "high",
+          "quoteSnippet": "suspend or terminate this Agreement immediately and without refund if, in its opinion"
+        },
+        {
+          "clause": "4.4",
+          "category": "penalty_fee",
+          "severity": "high",
+          "quoteSnippet": "early termination charge of ₹3,000"
+        },
+        {
+          "clause": "5.1/5.2",
+          "category": "refund_deposit",
+          "severity": "high",
+          "quoteSnippet": "non-refundable in all circumstances"
+        },
+        {
+          "clause": "5.3",
+          "category": "refund_deposit",
           "severity": "medium",
-          "quoteSnippet": "share personal data, contact information, biometric health metrics"
+          "quoteSnippet": "as determined by the Company"
         },
         {
+          "clause": "7.1",
+          "category": "liability_indemnity",
+          "severity": "high",
+          "quoteSnippet": "shall not be liable for any injury, illness, death, loss or damage of any kind, howsoever caused, including through the negligence"
+        },
+        {
+          "clause": "7.2",
           "category": "liability_indemnity",
           "severity": "medium",
-          "quoteSnippet": "defend, indemnify, and hold harmless the Club"
+          "quoteSnippet": "indemnify and hold harmless the Company against all claims, costs, losses and expenses"
+        },
+        {
+          "clause": "7.3",
+          "category": "exclusion_coverage",
+          "severity": "high",
+          "quoteSnippet": "within seven (7) days of the incident giving rise to it, failing which it shall be deemed to have been waived"
+        },
+        {
+          "clause": "8.2",
+          "category": "data_privacy",
+          "severity": "medium",
+          "quoteSnippet": "sharing the Member’s personal data, including contact details and photographs, with its affiliates, sponsors and third-party partners"
+        },
+        {
+          "clause": "9.1",
+          "category": "arbitration_jurisdiction",
+          "severity": "high",
+          "quoteSnippet": "referred to a sole arbitrator appointed by the Company"
+        },
+        {
+          "clause": "10.2",
+          "category": "unilateral_change",
+          "severity": "high",
+          "quoteSnippet": "amend this Agreement or the Club rules at any time by displaying a notice at the Club or on its website"
         }
       ],
       "expectedTerms": {
         "subscription": {
-          "price": 24000,
+          "price": 17988,
           "billingPeriodMonths": 12,
           "autoRenews": true,
-          "cancelNoticeDays": 60
+          "cancelNoticeDays": 60,
+          "earlyExitFee": 3000
         }
       },
       "expectedDeadlines": [
         {
-          "label": "Notice of non-renewal",
+          "label": "Notice of cancellation",
           "relative": {
             "n": 60,
             "unit": "day",

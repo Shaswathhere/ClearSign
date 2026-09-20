@@ -19,14 +19,23 @@ export const Category = z.enum([
   "other",
 ]);
 
+export function truncateWordSafely(text: string, maxLen: number): string {
+  if (!text || text.length <= maxLen) return text;
+  const lastSpace = text.lastIndexOf(" ", maxLen);
+  if (lastSpace > maxLen * 0.4) {
+    return text.slice(0, lastSpace).trim();
+  }
+  return text.slice(0, maxLen).trim();
+}
+
 export const Trap = z.object({
   clauseId: z.string(),                  // "C7"
-  quote: z.string().min(20).transform((q) => (q.length > 400 ? q.slice(0, 400) : q)),    // must exist in source
+  quote: z.string().min(20).transform((q) => truncateWordSafely(q, 400)),    // must exist in source
   category: Category,
   severity: Severity,
-  why: z.string().transform((w) => (w.length > 280 ? w.slice(0, 280) : w)),              // plain language, Grade 6
-  action: z.string().transform((a) => (a.length > 200 ? a.slice(0, 200) : a)),           // what to do
-  question: z.string().transform((q) => (q.length > 200 ? q.slice(0, 200) : q)).optional(),
+  why: z.string().transform((w) => truncateWordSafely(w, 280)),              // plain language, Grade 6
+  action: z.string().transform((a) => truncateWordSafely(a, 200)),           // what to do
+  question: z.string().transform((q) => truncateWordSafely(q, 200)).optional(),
 });
 
 export const RelativeRule = z.object({
@@ -103,4 +112,6 @@ export type AnalyzeResponse = Omit<Analysis, "traps"> & {
   score: number;                         // 0..100
   band: "low" | "moderate" | "high" | "severe";
   removedUnverified: number;
+  engine: "llm" | "rules-only";
+  engineErrorCode?: string;
 };

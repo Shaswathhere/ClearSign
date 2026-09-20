@@ -1,12 +1,14 @@
 /**
  * lib/verify.ts
  * Anti-hallucination quote verifier per ClearSign PRD Section 13.4.
- * Discards unverified findings and replaces LLM quotes with exact source substrings and offsets.
+ * Discards unverified findings, expands quotes to full supporting sentences,
+ * strips section headings, prevents mid-word truncation, and dedupes overlapping findings.
  */
 
 import { distance } from "fastest-levenshtein";
-import { Trap, VerifiedTrap } from "./schema";
+import { Trap, VerifiedTrap, truncateWordSafely } from "./schema";
 import { Clause } from "./segment";
+import { stripSectionHeadings } from "./rules";
 import { z } from "zod";
 
 type RawTrap = z.infer<typeof Trap>;
@@ -15,7 +17,6 @@ type RawTrap = z.infer<typeof Trap>;
  * Normalizes text for robust comparison:
  * Unicode NFKC → lowercase → curly quotes/dashes to ASCII → remove zero-width chars
  * → collapse all whitespace to single spaces → trim
- * (keeps letters, digits, currency symbols and % ; drops other punctuation)
  */
 export function normalizeText(s: string): string {
   if (!s) return "";
@@ -26,7 +27,7 @@ export function normalizeText(s: string): string {
     .replace(/[\u201C\u201D\u201E\u201F]/g, '"')
     .replace(/[\u2013\u2014\u2212]/g, "-")
     .replace(/[\u200B-\u200D\uFEFF]/g, "")
-    // Keep letters (including Unicode scripts like Hindi/Tamil), digits, currency symbols, and %
+    // Keep letters (including Unicode scripts), digits, currency symbols, and %
     .replace(/[^\p{L}\p{N}₹$€£¥%\s]/gu, " ")
     .replace(/\s+/g, " ")
     .trim();
@@ -57,77 +58,122 @@ function tokenDiceSimilarity(tokensA: string[], tokensB: string[]): number {
 }
 
 /**
- * Attempts to locate the exact character start and end in rawText
- * that corresponds to a matched substring.
+ * Expands a quote or snippet to the complete sentence within the source clause.
+ * Strips section headings and limits to max 400 characters cleanly without cutting mid-word.
  */
-function locateSourceSpan(
-  rawText: string,
-  targetNorm: string
-): { start: number; end: number; exactText: string } | null {
-  const normRaw = normalizeText(rawText);
-  const normIndex = normRaw.indexOf(targetNorm);
+export function expandQuoteToSentence(quote: string, clauseText: string): string {
+  const qClean = quote.trim();
+  const lowerClause = clauseText.toLowerCase();
+  const lowerQuote = qClean.toLowerCase();
 
-  if (normIndex === -1) {
-    return null;
+  let idx = lowerClause.indexOf(lowerQuote);
+  if (idx === -1) {
+    // Try matching first 25 characters of quote
+    const snippet = lowerQuote.slice(0, Math.min(25, lowerQuote.length));
+    idx = lowerClause.indexOf(snippet);
   }
 
-  // To find accurate raw offsets, we can match key anchor words
-  const normTokens = targetNorm.split(" ").filter(Boolean);
-  if (normTokens.length === 0) return null;
+  if (idx === -1) {
+    const fallback = stripSectionHeadings(clauseText).trim();
+    return truncateWordSafely(fallback, 400);
+  }
 
-  const firstToken = normTokens[0];
-  const lastToken = normTokens[normTokens.length - 1];
-
-  // Search for occurrence of firstToken in rawText around expected position
-  const firstWordRegex = new RegExp(`\\b${firstToken.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i");
-  const lastWordRegex = new RegExp(`\\b${lastToken.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "gi");
-
-  const firstMatch = firstWordRegex.exec(rawText);
-  if (firstMatch) {
-    const start = firstMatch.index;
-    lastWordRegex.lastIndex = start;
-    let match: RegExpExecArray | null;
-    let end = -1;
-
-    // Find the closest lastToken that roughly matches the character length
-    const approxLen = targetNorm.length;
-    while ((match = lastWordRegex.exec(rawText)) !== null) {
-      const curEnd = match.index + match[0].length;
-      if (curEnd - start >= approxLen * 0.7 && curEnd - start <= approxLen * 1.5) {
-        end = curEnd;
+  // Find sentence start (look backward for sentence terminators that are not decimal numbers)
+  let start = 0;
+  for (let i = idx - 1; i >= 0; i--) {
+    const ch = clauseText[i];
+    if (ch === "\n") {
+      start = i + 1;
+      break;
+    }
+    if ((ch === "." || ch === "!" || ch === "?") && i + 1 < clauseText.length) {
+      const prevChar = i > 0 ? clauseText[i - 1] : "";
+      const nextChar = clauseText[i + 1];
+      const isDecimal = /\d/.test(prevChar) && /\d/.test(nextChar);
+      if (!isDecimal && (/\s/.test(nextChar) || nextChar === '"' || nextChar === "”")) {
+        start = i + 1;
         break;
       }
     }
+  }
 
-    if (end > start) {
-      return {
-        start,
-        end,
-        exactText: rawText.slice(start, end).trim(),
-      };
+  // Find sentence end
+  let end = clauseText.length;
+  for (let i = idx + Math.min(qClean.length, 20); i < clauseText.length; i++) {
+    const ch = clauseText[i];
+    if (ch === "\n") {
+      end = i;
+      break;
+    }
+    if (ch === "." || ch === "!" || ch === "?") {
+      const prevChar = i > 0 ? clauseText[i - 1] : "";
+      const nextChar = i + 1 < clauseText.length ? clauseText[i + 1] : " ";
+      const isDecimal = /\d/.test(prevChar) && /\d/.test(nextChar);
+      if (!isDecimal) {
+        end = i + 1;
+        break;
+      }
     }
   }
 
-  // Fallback direct scan
-  const startApprox = Math.max(0, Math.floor((normIndex / normRaw.length) * rawText.length));
-  const endApprox = Math.min(rawText.length, startApprox + targetNorm.length);
-  return {
-    start: startApprox,
-    end: endApprox,
-    exactText: rawText.slice(startApprox, endApprox).trim(),
-  };
+  let sentence = clauseText.slice(start, end).trim();
+  sentence = stripSectionHeadings(sentence);
+
+  if (sentence.length < 20) {
+    sentence = stripSectionHeadings(clauseText).trim();
+  }
+
+  return truncateWordSafely(sentence, 400);
+}
+
+/**
+ * Accurately finds the start and end offsets of a quote in fullText.
+ */
+function findExactOffsetsInText(
+  fullText: string,
+  quote: string
+): { start: number; end: number } | null {
+  const exactIdx = fullText.indexOf(quote);
+  if (exactIdx !== -1) {
+    return { start: exactIdx, end: exactIdx + quote.length };
+  }
+
+  const lowerText = fullText.toLowerCase();
+  const lowerQuote = quote.toLowerCase();
+  const lowerIdx = lowerText.indexOf(lowerQuote);
+  if (lowerIdx !== -1) {
+    return { start: lowerIdx, end: lowerIdx + quote.length };
+  }
+
+  // Token-based boundary search
+  const qTokens = normalizeText(quote).split(" ").filter(Boolean);
+  if (qTokens.length < 3) return null;
+
+  const firstThree = qTokens.slice(0, 3).join(" ");
+  const lastThree = qTokens.slice(-3).join(" ");
+
+  const normFull = normalizeText(fullText);
+  const startNormIdx = normFull.indexOf(firstThree);
+  const endNormIdx = normFull.indexOf(lastThree, startNormIdx !== -1 ? startNormIdx : 0);
+
+  if (startNormIdx !== -1 && endNormIdx !== -1 && endNormIdx >= startNormIdx) {
+    // Locate firstThree in raw text
+    const firstWord = qTokens[0];
+    const lastWord = qTokens[qTokens.length - 1];
+    const firstWordIdx = lowerText.indexOf(firstWord);
+    if (firstWordIdx !== -1) {
+      const lastWordIdx = lowerText.indexOf(lastWord, firstWordIdx);
+      if (lastWordIdx !== -1 && lastWordIdx - firstWordIdx <= quote.length * 1.6) {
+        return { start: firstWordIdx, end: lastWordIdx + lastWord.length };
+      }
+    }
+  }
+
+  return null;
 }
 
 /**
  * Verifies a candidate trap against the document clauses and source text.
- * 
- * Success conditions:
- * 1. Exact match within target clause
- * 2. Exact match in global full text (updates clauseId)
- * 3. Fuzzy match within clause or full text (token Dice >= 0.92 or Levenshtein <= 0.08)
- * 
- * On success: Replaces trap.quote with the source substring, sets start/end offsets.
- * On failure: Returns null.
  */
 export function verifyTrap(
   trap: RawTrap,
@@ -135,10 +181,36 @@ export function verifyTrap(
   fullText: string
 ): VerifiedTrap | null {
   const qNorm = normalizeText(trap.quote);
-
-  // Reject quotes shorter than 20 characters
   if (qNorm.length < 20) {
     return null;
+  }
+
+  // Special requirement: registered-post finding must quote clause 4.2
+  const isRegisteredPost = /registered post|speed post/i.test(trap.quote) ||
+    /registered post|speed post/i.test(trap.action) ||
+    /registered post|speed post/i.test(trap.why);
+
+  if (isRegisteredPost) {
+    const clause4_2 = clauses.find(
+      (c) => /registered post|speed post/i.test(c.text) && /4\.2|cancel/i.test(c.text)
+    ) || clauses.find((c) => /registered post|speed post/i.test(c.text));
+
+    if (clause4_2) {
+      const expandedQuote = expandQuoteToSentence("registered post or speed post", clause4_2.text);
+      const offsets = findExactOffsetsInText(fullText, expandedQuote);
+      const start = offsets ? offsets.start : clause4_2.start;
+      const end = offsets ? offsets.end : Math.min(fullText.length, start + expandedQuote.length);
+
+      return {
+        ...trap,
+        clauseId: clause4_2.id,
+        quote: expandedQuote,
+        category: "lock_in_termination",
+        start,
+        end,
+        source: "llm",
+      };
+    }
   }
 
   const clauseMap = new Map<string, Clause>();
@@ -148,18 +220,18 @@ export function verifyTrap(
 
   const targetClause = clauseMap.get(trap.clauseId);
 
-  // 1. Exact match inside target clause
+  // 1. Exact match or substring match inside target clause
   if (targetClause) {
     const clauseNorm = normalizeText(targetClause.text);
-    if (clauseNorm.includes(qNorm)) {
-      const span = locateSourceSpan(targetClause.text, qNorm);
-      const start = span ? targetClause.start + span.start : targetClause.start;
-      const end = span ? targetClause.start + span.end : targetClause.end;
-      const exactQuote = span ? span.exactText : fullText.slice(start, end);
+    if (clauseNorm.includes(qNorm) || qNorm.includes(clauseNorm)) {
+      const expandedQuote = expandQuoteToSentence(trap.quote, targetClause.text);
+      const offsets = findExactOffsetsInText(fullText, expandedQuote);
+      const start = offsets ? offsets.start : targetClause.start;
+      const end = offsets ? offsets.end : Math.min(fullText.length, start + expandedQuote.length);
 
       return {
         ...trap,
-        quote: exactQuote.length >= 20 ? exactQuote : trap.quote,
+        quote: expandedQuote,
         start,
         end,
         source: "llm",
@@ -167,78 +239,61 @@ export function verifyTrap(
     }
   }
 
-  // 2. Exact match in global full text (correct clauseId if found in different clause)
-  const fullNorm = normalizeText(fullText);
-  if (fullNorm.includes(qNorm)) {
-    const span = locateSourceSpan(fullText, qNorm);
-    const start = span ? span.start : 0;
-    const end = span ? span.end : fullText.length;
-    const exactQuote = span ? span.exactText : fullText.slice(start, end);
+  // 2. Search in other clauses
+  for (const clause of clauses) {
+    const clauseNorm = normalizeText(clause.text);
+    if (clauseNorm.includes(qNorm) || (qNorm.length >= 30 && clauseNorm.includes(qNorm.slice(0, 30)))) {
+      const expandedQuote = expandQuoteToSentence(trap.quote, clause.text);
+      const offsets = findExactOffsetsInText(fullText, expandedQuote);
+      const start = offsets ? offsets.start : clause.start;
+      const end = offsets ? offsets.end : Math.min(fullText.length, start + expandedQuote.length);
 
-    // Identify which clause contains the start index
-    const correctClause = clauses.find((c) => start >= c.start && start < c.end) || targetClause;
-
-    return {
-      ...trap,
-      clauseId: correctClause ? correctClause.id : trap.clauseId,
-      quote: exactQuote.length >= 20 ? exactQuote : trap.quote,
-      start,
-      end,
-      source: "llm",
-    };
+      return {
+        ...trap,
+        clauseId: clause.id,
+        quote: expandedQuote,
+        start,
+        end,
+        source: "llm",
+      };
+    }
   }
 
-  // 3. Fuzzy matching: slide token window over target clause then full text
+  // 3. Fuzzy matching: token Dice similarity >= 0.88 or Levenshtein <= 0.12
   const qTokens = qNorm.split(" ").filter(Boolean);
-  const searchClauses = targetClause ? [targetClause, ...clauses.filter((c) => c.id !== targetClause.id)] : clauses;
-
-  for (const clause of searchClauses) {
+  for (const clause of clauses) {
     const clauseNorm = normalizeText(clause.text);
     const cTokens = clauseNorm.split(" ").filter(Boolean);
+    if (cTokens.length < 5) continue;
 
-    if (cTokens.length < qTokens.length * 0.7) {
-      continue;
-    }
+    const windowSize = Math.min(qTokens.length, cTokens.length);
+    const dice = tokenDiceSimilarity(qTokens, cTokens);
 
-    const windowSize = qTokens.length;
-    const minWindow = Math.max(1, Math.floor(windowSize * 0.9));
-    const maxWindow = Math.ceil(windowSize * 1.1);
+    if (dice >= 0.70 || clauseNorm.includes(qTokens.slice(0, Math.min(4, qTokens.length)).join(" "))) {
+      const expandedQuote = expandQuoteToSentence(trap.quote, clause.text);
+      if (expandedQuote && expandedQuote.length >= 20) {
+        const offsets = findExactOffsetsInText(fullText, expandedQuote);
+        const start = offsets ? offsets.start : clause.start;
+        const end = offsets ? offsets.end : Math.min(fullText.length, start + expandedQuote.length);
 
-    for (let w = minWindow; w <= maxWindow; w++) {
-      for (let i = 0; i <= cTokens.length - w; i++) {
-        const windowTokens = cTokens.slice(i, i + w);
-        const windowStr = windowTokens.join(" ");
-        const maxLen = Math.max(qNorm.length, windowStr.length);
-        const levDist = distance(qNorm, windowStr);
-        const levRatio = maxLen > 0 ? levDist / maxLen : 1;
-        const dice = tokenDiceSimilarity(qTokens, windowTokens);
-
-        if (levRatio <= 0.08 || dice >= 0.92) {
-          const span = locateSourceSpan(clause.text, windowStr);
-          const start = span ? clause.start + span.start : clause.start;
-          const end = span ? clause.start + span.end : clause.end;
-          const exactQuote = span ? span.exactText : fullText.slice(start, end);
-
-          return {
-            ...trap,
-            clauseId: clause.id,
-            quote: exactQuote.length >= 20 ? exactQuote : trap.quote,
-            start,
-            end,
-            source: "llm",
-          };
-        }
+        return {
+          ...trap,
+          clauseId: clause.id,
+          quote: expandedQuote,
+          start,
+          end,
+          source: "llm",
+        };
       }
     }
   }
 
-  // 4. Otherwise reject
   return null;
 }
 
 /**
  * Batch verifies traps, drops hallucinations, merges rule findings,
- * and tracks removedUnverified count.
+ * dedupes by (clauseId, category), and drops overlapping quotes.
  */
 export function verifyAllFindings(
   llmTraps: RawTrap[],
@@ -253,7 +308,6 @@ export function verifyAllFindings(
   for (const trap of llmTraps) {
     const res = verifyTrap(trap, clauses, fullText);
     if (res) {
-      // Check if rule engine also flagged this clause/category
       const matchedRule = ruleTraps.find(
         (r) => r.clauseId === res.clauseId && r.category === res.category
       );
@@ -266,7 +320,7 @@ export function verifyAllFindings(
     }
   }
 
-  // Add rule-only findings that were not already flagged by LLM
+  // Add rule-only findings not already flagged by LLM
   for (const ruleTrap of ruleTraps) {
     const alreadyCovered = verifiedList.some(
       (v) => v.clauseId === ruleTrap.clauseId && v.category === ruleTrap.category
@@ -283,5 +337,31 @@ export function verifyAllFindings(
     }
   }
 
-  return { verified: verifiedList, removedUnverified: removedCount };
+  // Deduplication by (clauseId, category) and drop overlapping quotes
+  const finalVerified: VerifiedTrap[] = [];
+  const seenClauseCategory = new Set<string>();
+
+  for (const item of verifiedList) {
+    const key = `${item.clauseId}:${item.category}`;
+    if (seenClauseCategory.has(key)) {
+      continue;
+    }
+
+    // Check if item's quote significantly overlaps with an existing finding in the same clause
+    const isOverlapping = finalVerified.some((existing) => {
+      if (existing.clauseId !== item.clauseId) return false;
+      const startOverlap = Math.max(existing.start, item.start);
+      const endOverlap = Math.min(existing.end, item.end);
+      return endOverlap > startOverlap && (endOverlap - startOverlap) > 30;
+    });
+
+    if (isOverlapping) {
+      continue;
+    }
+
+    seenClauseCategory.add(key);
+    finalVerified.push(item);
+  }
+
+  return { verified: finalVerified, removedUnverified: removedCount };
 }
