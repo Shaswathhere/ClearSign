@@ -1,0 +1,150 @@
+{
+  "samples": [
+    {
+      "id": "gym-membership",
+      "name": "Gym Membership Agreement",
+      "file": "samples/gym-membership.txt",
+      "docType": "subscription",
+      "plantedTraps": [
+        {
+          "category": "refund_deposit",
+          "severity": "high",
+          "quoteSnippet": "joining fee and all subscription fees paid are non-refundable"
+        },
+        {
+          "category": "auto_renewal",
+          "severity": "high",
+          "quoteSnippet": "automatically renew for successive consecutive terms of twelve (12) months"
+        },
+        {
+          "category": "lock_in_termination",
+          "severity": "high",
+          "quoteSnippet": "must be submitted exclusively via physical Registered Post or Speed Post"
+        },
+        {
+          "category": "unilateral_change",
+          "severity": "high",
+          "quoteSnippet": "reserves the right to change, modify, increase membership fees"
+        },
+        {
+          "category": "data_privacy",
+          "severity": "medium",
+          "quoteSnippet": "share personal data, contact information, biometric health metrics"
+        },
+        {
+          "category": "liability_indemnity",
+          "severity": "medium",
+          "quoteSnippet": "defend, indemnify, and hold harmless the Club"
+        }
+      ],
+      "expectedTerms": {
+        "subscription": {
+          "price": 24000,
+          "billingPeriodMonths": 12,
+          "autoRenews": true,
+          "cancelNoticeDays": 60
+        }
+      },
+      "expectedDeadlines": [
+        {
+          "label": "Notice of non-renewal",
+          "relative": {
+            "n": 60,
+            "unit": "day",
+            "direction": "before",
+            "anchor": "renewal_date"
+          }
+        }
+      ]
+    },
+    {
+      "id": "rental-agreement",
+      "name": "Residential Rental Agreement",
+      "file": "samples/rental-agreement.txt",
+      "docType": "rental",
+      "plantedTraps": [
+        {
+          "category": "lock_in_termination",
+          "severity": "high",
+          "quoteSnippet": "mandatory lock-in period of six (6) months"
+        },
+        {
+          "category": "refund_deposit",
+          "severity": "high",
+          "quoteSnippet": "security deposit shall be forfeited and the Tenant shall remain liable to pay the full monthly rent"
+        },
+        {
+          "category": "hidden_charges",
+          "severity": "medium",
+          "quoteSnippet": "increase by 10% on the prevailing rate"
+        },
+        {
+          "category": "refund_deposit",
+          "severity": "high",
+          "quoteSnippet": "deducted at landlord's sole discretion without requirement of invoices"
+        },
+        {
+          "category": "unilateral_change",
+          "severity": "high",
+          "quoteSnippet": "inspect, show the premises to prospective purchasers or contractors at any time of day or night without prior notice"
+        }
+      ],
+      "expectedTerms": {
+        "rental": {
+          "monthlyRent": 35000,
+          "deposit": 210000,
+          "lockInMonths": 6,
+          "noticeMonths": 2,
+          "annualEscalationPct": 10
+        }
+      }
+    },
+    {
+      "id": "personal-loan",
+      "name": "Personal Loan Key Fact Statement",
+      "file": "samples/personal-loan.txt",
+      "docType": "loan",
+      "plantedTraps": [
+        {
+          "category": "hidden_charges",
+          "severity": "low",
+          "quoteSnippet": "processing fee of 2.5% on the gross loan principal"
+        },
+        {
+          "category": "interest_rate",
+          "severity": "medium",
+          "quoteSnippet": "floating rate subject to change and periodic review"
+        },
+        {
+          "category": "penalty_fee",
+          "severity": "medium",
+          "quoteSnippet": "penal interest charge of 24% per annum compounded monthly"
+        },
+        {
+          "category": "penalty_fee",
+          "severity": "high",
+          "quoteSnippet": "prepayment penalty fee of 4% on the total outstanding principal balance"
+        },
+        {
+          "category": "data_privacy",
+          "severity": "medium",
+          "quoteSnippet": "share all personal, financial, biometric, repayment, and demographic data"
+        },
+        {
+          "category": "arbitration_jurisdiction",
+          "severity": "medium",
+          "quoteSnippet": "sole arbitration appointed exclusively by the Lender"
+        }
+      ],
+      "expectedTerms": {
+        "loan": {
+          "principal": 500000,
+          "annualRatePct": 14.5,
+          "tenureMonths": 36,
+          "processingFeePct": 2.5,
+          "prepaymentPenaltyPct": 4
+        }
+      }
+    }
+  ]
+}
