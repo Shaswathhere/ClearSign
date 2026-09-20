@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { Trap, Analysis } from "../lib/schema";
+import { Trap } from "../lib/schema";
 
 describe("Schema Validation", () => {
   it("validates a well-formed trap", () => {
