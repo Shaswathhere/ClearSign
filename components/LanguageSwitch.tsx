@@ -39,8 +39,8 @@ export default function LanguageSwitch({ current, onChange, isTranslating }: Lan
               min-h-[36px] min-w-[36px] px-2 py-1 rounded-lg text-xs font-bold transition-all
               disabled:opacity-50 disabled:cursor-not-allowed
               ${isActive
-                ? "bg-teal-700 text-white shadow-sm"
-                : "bg-white text-slate-600 border border-slate-200 hover:border-teal-400 hover:text-teal-700"
+                ? "bg-indigo-700 text-white shadow-sm"
+                : "bg-white text-slate-600 border border-slate-200 hover:border-indigo-400 hover:text-indigo-700"
               }
             `}
           >
@@ -53,7 +53,7 @@ export default function LanguageSwitch({ current, onChange, isTranslating }: Lan
         );
       })}
       {isTranslating && (
-        <span className="text-[10px] text-teal-600 font-medium animate-pulse">Translating…</span>
+        <span className="text-[10px] text-indigo-600 font-medium animate-pulse">Translating…</span>
       )}
     </div>
   );

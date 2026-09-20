@@ -105,8 +105,8 @@ export default function ReadAloud({ segments, locale }: ReadAloudProps) {
       onClick={handleToggle}
       className={`flex items-center gap-1.5 text-xs font-semibold transition-colors rounded-lg px-2.5 py-1.5 min-h-[36px] ${
         playing
-          ? "bg-teal-700 text-white"
-          : "bg-teal-50 text-teal-700 hover:bg-teal-100 border border-teal-200"
+          ? "bg-indigo-700 text-white"
+          : "bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200"
       }`}
       aria-label={playing ? "Pause read-aloud" : "Read summary aloud"}
     >

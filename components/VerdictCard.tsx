@@ -140,12 +140,12 @@ export default function VerdictCard({
       {/* 5-Line Summary */}
       <div className="space-y-2">
         <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-          <Sparkles className="h-3.5 w-3.5 text-teal-700" /> Key Takeaways
+          <Sparkles className="h-3.5 w-3.5 text-indigo-700" /> Key Takeaways
         </h4>
         <ul className="space-y-1.5 text-sm text-slate-800 leading-relaxed">
           {summary.map((point, i) => (
             <li key={i} className="flex items-start gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-teal-700 mt-2 shrink-0" />
+              <span className="h-1.5 w-1.5 rounded-full bg-indigo-700 mt-2 shrink-0" />
               <span>{point}</span>
             </li>
           ))}
@@ -174,7 +174,7 @@ export default function VerdictCard({
             onClick={handleCopy}
             title="Copy summary to clipboard"
             aria-label="Copy summary"
-            className="inline-flex items-center gap-1 text-slate-500 hover:text-teal-700 bg-white border border-slate-200 rounded-lg px-2 py-1 transition-colors"
+            className="inline-flex items-center gap-1 text-slate-500 hover:text-indigo-700 bg-white border border-slate-200 rounded-lg px-2 py-1 transition-colors"
           >
             {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
             {copied ? "Copied!" : "Copy"}
@@ -186,7 +186,7 @@ export default function VerdictCard({
             onClick={handleShare}
             title="Share summary"
             aria-label="Share summary"
-            className="inline-flex items-center gap-1 text-slate-500 hover:text-teal-700 bg-white border border-slate-200 rounded-lg px-2 py-1 transition-colors"
+            className="inline-flex items-center gap-1 text-slate-500 hover:text-indigo-700 bg-white border border-slate-200 rounded-lg px-2 py-1 transition-colors"
           >
             <Share2 className="h-3.5 w-3.5" />
             Share

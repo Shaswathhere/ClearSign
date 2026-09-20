@@ -107,7 +107,7 @@ export default function DraftEmailModal({ traps, docType, isOpen, onClose }: Dra
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-slate-100">
           <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-50 text-teal-700">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700">
               <Sparkles className="h-5 w-5" />
             </div>
             <div>
@@ -134,7 +134,7 @@ export default function DraftEmailModal({ traps, docType, isOpen, onClose }: Dra
               onClick={() => setTone("polite")}
               className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all ${
                 tone === "polite"
-                  ? "bg-white text-teal-800 shadow-xs"
+                  ? "bg-white text-indigo-800 shadow-xs"
                   : "text-slate-600 hover:text-slate-900"
               }`}
             >
@@ -145,7 +145,7 @@ export default function DraftEmailModal({ traps, docType, isOpen, onClose }: Dra
               onClick={() => setTone("firm")}
               className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all ${
                 tone === "firm"
-                  ? "bg-white text-teal-800 shadow-xs"
+                  ? "bg-white text-indigo-800 shadow-xs"
                   : "text-slate-600 hover:text-slate-900"
               }`}
             >
@@ -158,7 +158,7 @@ export default function DraftEmailModal({ traps, docType, isOpen, onClose }: Dra
         <div className="p-5 overflow-y-auto space-y-4 flex-1">
           {loading ? (
             <div className="py-12 flex flex-col items-center justify-center gap-3 text-slate-500">
-              <Loader2 className="h-6 w-6 animate-spin text-teal-600" />
+              <Loader2 className="h-6 w-6 animate-spin text-indigo-600" />
               <p className="text-xs">Drafting negotiation email with {tone} tone...</p>
             </div>
           ) : error ? (
@@ -183,7 +183,7 @@ export default function DraftEmailModal({ traps, docType, isOpen, onClose }: Dra
                   type="text"
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-xl font-medium text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-teal-500 text-xs"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl font-medium text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 text-xs"
                 />
               </div>
 
@@ -195,7 +195,7 @@ export default function DraftEmailModal({ traps, docType, isOpen, onClose }: Dra
                   rows={9}
                   value={body}
                   onChange={(e) => setBody(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-slate-700 focus:outline-hidden focus:ring-2 focus:ring-teal-500 text-xs leading-relaxed"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-slate-700 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 text-xs leading-relaxed"
                 />
               </div>
 
@@ -229,7 +229,7 @@ export default function DraftEmailModal({ traps, docType, isOpen, onClose }: Dra
               href={mailtoHref}
               target="_blank"
               rel="noopener noreferrer"
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl bg-teal-700 hover:bg-teal-800 text-white text-xs font-semibold shadow-xs transition-colors ${
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl bg-indigo-700 hover:bg-indigo-800 text-white text-xs font-semibold shadow-xs transition-colors ${
                 loading || !body ? "pointer-events-none opacity-40" : ""
               }`}
             >

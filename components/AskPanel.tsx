@@ -70,7 +70,7 @@ function parseCitations(text: string, onJump: (id: string) => void): React.React
           type="button"
           onClick={() => onJump(id)}
           title={`Jump to clause ${id}`}
-          className="inline-flex items-center rounded-full bg-teal-100 text-teal-700 text-[10px] font-bold px-1.5 py-0.5 mx-0.5 hover:bg-teal-200 transition-colors"
+          className="inline-flex items-center rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-bold px-1.5 py-0.5 mx-0.5 hover:bg-indigo-200 transition-colors"
         >
           {id}
         </button>
@@ -142,7 +142,7 @@ export default function AskPanel({ clauses, result, onShowInDocument }: AskPanel
     <div className="flex flex-col space-y-4">
       {/* Header */}
       <div className="flex items-center gap-2">
-        <MessageSquareQuote className="h-5 w-5 text-teal-700 shrink-0" />
+        <MessageSquareQuote className="h-5 w-5 text-indigo-700 shrink-0" />
         <div>
           <h3 className="text-sm font-bold text-slate-900">Ask this Document</h3>
           <p className="text-[11px] text-slate-500">Answers are grounded strictly in the contract clauses.</p>
@@ -160,7 +160,7 @@ export default function AskPanel({ clauses, result, onShowInDocument }: AskPanel
                 type="button"
                 onClick={() => sendMessage(q)}
                 disabled={loading}
-                className="text-xs bg-white border border-teal-200 text-teal-700 rounded-xl px-3 py-2 hover:bg-teal-50 transition-colors font-medium min-h-[40px] disabled:opacity-50 text-left"
+                className="text-xs bg-white border border-indigo-200 text-indigo-700 rounded-xl px-3 py-2 hover:bg-indigo-50 transition-colors font-medium min-h-[40px] disabled:opacity-50 text-left"
               >
                 {q}
               </button>
@@ -180,7 +180,7 @@ export default function AskPanel({ clauses, result, onShowInDocument }: AskPanel
               <div
                 className={`max-w-[85%] rounded-2xl px-4 py-3 text-xs leading-relaxed ${
                   msg.role === "user"
-                    ? "bg-teal-700 text-white rounded-br-sm"
+                    ? "bg-indigo-700 text-white rounded-br-sm"
                     : "bg-white border border-slate-200 text-slate-800 rounded-bl-sm shadow-xs"
                 }`}
               >
@@ -194,7 +194,7 @@ export default function AskPanel({ clauses, result, onShowInDocument }: AskPanel
           {loading && (
             <div className="flex justify-start">
               <div className="bg-white border border-slate-200 rounded-2xl rounded-bl-sm px-4 py-3 flex items-center gap-2 shadow-xs">
-                <Loader2 className="h-4 w-4 animate-spin text-teal-600" />
+                <Loader2 className="h-4 w-4 animate-spin text-indigo-600" />
                 <span className="text-xs text-slate-500">Searching clauses…</span>
               </div>
             </div>
@@ -207,7 +207,7 @@ export default function AskPanel({ clauses, result, onShowInDocument }: AskPanel
       <div className="flex items-start gap-2 bg-slate-50 rounded-xl p-3 border border-slate-200">
         <Info className="h-3.5 w-3.5 text-slate-400 shrink-0 mt-0.5" />
         <p className="text-[11px] text-slate-500 leading-relaxed">
-          Answers are based only on the text in this document. Tap a <span className="font-bold text-teal-700">[C#]</span> citation to jump to that clause. This is not legal advice.
+          Answers are based only on the text in this document. Tap a <span className="font-bold text-indigo-700">[C#]</span> citation to jump to that clause. This is not legal advice.
         </p>
       </div>
 
@@ -219,13 +219,13 @@ export default function AskPanel({ clauses, result, onShowInDocument }: AskPanel
           onChange={(e) => setInput(e.target.value)}
           placeholder="Ask anything about this contract…"
           disabled={loading}
-          className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 disabled:opacity-50 min-h-[48px]"
+          className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 min-h-[48px]"
           aria-label="Question input"
         />
         <button
           type="submit"
           disabled={!input.trim() || loading}
-          className="flex items-center justify-center rounded-xl bg-teal-700 text-white px-4 min-h-[48px] min-w-[48px] hover:bg-teal-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          className="flex items-center justify-center rounded-xl bg-indigo-700 text-white px-4 min-h-[48px] min-w-[48px] hover:bg-indigo-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           aria-label="Send question"
         >
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}

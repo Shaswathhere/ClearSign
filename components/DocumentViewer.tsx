@@ -73,7 +73,7 @@ export default function DocumentViewer({
           }
 
           if (isActive) {
-            highlightClasses += " ring-2 ring-teal-600 ring-offset-1 rounded-md shadow-sm";
+            highlightClasses += " ring-2 ring-indigo-600 ring-offset-1 rounded-md shadow-sm";
           }
 
           return (
