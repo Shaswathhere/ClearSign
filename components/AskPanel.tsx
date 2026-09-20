@@ -16,8 +16,6 @@ interface AskPanelProps {
   onShowInDocument: (clauseId: string) => void;
 }
 
-// ─── Suggested chips based on doc type ────────────────────────────────────────
-
 const SUGGESTED_QUESTIONS: Record<string, string[]> = {
   rental: [
     "Can I cancel the lease early without penalty?",
@@ -56,8 +54,6 @@ const SUGGESTED_QUESTIONS: Record<string, string[]> = {
   ],
 };
 
-// ─── Citation parser ───────────────────────────────────────────────────────────
-
 function parseCitations(text: string, onJump: (id: string) => void): React.ReactNode {
   const parts = text.split(/(\[C\d+\])/g);
   return parts.map((part, i) => {
@@ -70,7 +66,12 @@ function parseCitations(text: string, onJump: (id: string) => void): React.React
           type="button"
           onClick={() => onJump(id)}
           title={`Jump to clause ${id}`}
-          className="inline-flex items-center rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-bold px-1.5 py-0.5 mx-0.5 hover:bg-indigo-200 transition-colors"
+          className="inline-flex items-center rounded-full text-[10px] font-bold px-1.5 py-0.5 mx-0.5 transition-colors"
+          style={{
+            backgroundColor: "var(--primary-tint)",
+            color: "var(--primary)",
+            border: "1px solid var(--primary-border)",
+          }}
         >
           {id}
         </button>
@@ -79,8 +80,6 @@ function parseCitations(text: string, onJump: (id: string) => void): React.React
     return <span key={i}>{part}</span>;
   });
 }
-
-// ─── Main Component ────────────────────────────────────────────────────────────
 
 export default function AskPanel({ clauses, result, onShowInDocument }: AskPanelProps) {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -101,11 +100,9 @@ export default function AskPanel({ clauses, result, onShowInDocument }: AskPanel
   const sendMessage = useCallback(async (question: string) => {
     const q = question.trim();
     if (!q || loading) return;
-
     setMessages((prev) => [...prev, { role: "user", content: q }]);
     setInput("");
     setLoading(true);
-
     try {
       const res = await fetch("/api/ask", {
         method: "POST",
@@ -115,19 +112,12 @@ export default function AskPanel({ clauses, result, onShowInDocument }: AskPanel
           clauses: clauses.map((c) => ({ id: c.id, text: c.text })),
         }),
       });
-
       const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error?.message || "Failed to get answer.");
-      }
-
+      if (!res.ok) throw new Error(data.error?.message || "Failed to get answer.");
       setMessages((prev) => [...prev, { role: "assistant", content: data.answer }]);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Something went wrong.";
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: `Error: ${msg}` },
-      ]);
+      setMessages((prev) => [...prev, { role: "assistant", content: `Error: ${msg}` }]);
     } finally {
       setLoading(false);
     }
@@ -142,17 +132,27 @@ export default function AskPanel({ clauses, result, onShowInDocument }: AskPanel
     <div className="flex flex-col space-y-4">
       {/* Header */}
       <div className="flex items-center gap-2">
-        <MessageSquareQuote className="h-5 w-5 text-indigo-700 shrink-0" />
+        <MessageSquareQuote
+          className="h-5 w-5 shrink-0"
+          style={{ color: "var(--primary)" }}
+          strokeWidth={1.75}
+        />
         <div>
-          <h3 className="text-sm font-bold text-slate-900">Ask this Document</h3>
-          <p className="text-[11px] text-slate-500">Answers are grounded strictly in the contract clauses.</p>
+          <h3 className="text-sm font-bold" style={{ color: "var(--foreground)" }}>
+            Ask this document
+          </h3>
+          <p className="text-[11px]" style={{ color: "var(--foreground-2)" }}>
+            Answers are grounded strictly in the contract clauses.
+          </p>
         </div>
       </div>
 
-      {/* Suggested chips — shown only before first message */}
+      {/* Suggested chips */}
       {messages.length === 0 && (
         <div className="space-y-2">
-          <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Suggested questions</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "var(--muted)" }}>
+            Suggested questions
+          </p>
           <div className="flex flex-wrap gap-2">
             {suggestedQuestions.map((q) => (
               <button
@@ -160,7 +160,25 @@ export default function AskPanel({ clauses, result, onShowInDocument }: AskPanel
                 type="button"
                 onClick={() => sendMessage(q)}
                 disabled={loading}
-                className="text-xs bg-white border border-indigo-200 text-indigo-700 rounded-xl px-3 py-2 hover:bg-indigo-50 transition-colors font-medium min-h-[40px] disabled:opacity-50 text-left"
+                className="text-xs rounded-xl px-3 py-2 font-medium transition-colors disabled:opacity-50 text-left"
+                style={{
+                  border: "1px solid var(--border-strong)",
+                  color: "var(--foreground-2)",
+                  backgroundColor: "transparent",
+                  minHeight: "40px",
+                }}
+                onMouseEnter={(e) => {
+                  const el = e.currentTarget as HTMLElement;
+                  el.style.borderColor = "var(--primary-border)";
+                  el.style.backgroundColor = "var(--primary-tint)";
+                  el.style.color = "var(--primary)";
+                }}
+                onMouseLeave={(e) => {
+                  const el = e.currentTarget as HTMLElement;
+                  el.style.borderColor = "var(--border-strong)";
+                  el.style.backgroundColor = "transparent";
+                  el.style.color = "var(--foreground-2)";
+                }}
               >
                 {q}
               </button>
@@ -171,18 +189,34 @@ export default function AskPanel({ clauses, result, onShowInDocument }: AskPanel
 
       {/* Message history */}
       {messages.length > 0 && (
-        <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1" role="log" aria-live="polite">
+        <div
+          className="space-y-3 max-h-[420px] overflow-y-auto pr-1"
+          role="log"
+          aria-live="polite"
+          aria-label="Chat messages"
+        >
           {messages.map((msg, i) => (
             <div
               key={i}
               className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
             >
               <div
-                className={`max-w-[85%] rounded-2xl px-4 py-3 text-xs leading-relaxed ${
+                className="max-w-[85%] rounded-2xl px-4 py-3 text-xs leading-relaxed"
+                style={
                   msg.role === "user"
-                    ? "bg-indigo-700 text-white rounded-br-sm"
-                    : "bg-white border border-slate-200 text-slate-800 rounded-bl-sm shadow-xs"
-                }`}
+                    ? {
+                        backgroundColor: "var(--primary-tint)",
+                        border: "1px solid var(--primary-border)",
+                        color: "var(--primary)",
+                        borderBottomRightRadius: "4px",
+                      }
+                    : {
+                        backgroundColor: "var(--surface)",
+                        border: "1px solid var(--border)",
+                        color: "var(--foreground)",
+                        borderBottomLeftRadius: "4px",
+                      }
+                }
               >
                 {msg.role === "assistant"
                   ? parseCitations(msg.content, handleJumpToClause)
@@ -190,12 +224,23 @@ export default function AskPanel({ clauses, result, onShowInDocument }: AskPanel
               </div>
             </div>
           ))}
-
           {loading && (
             <div className="flex justify-start">
-              <div className="bg-white border border-slate-200 rounded-2xl rounded-bl-sm px-4 py-3 flex items-center gap-2 shadow-xs">
-                <Loader2 className="h-4 w-4 animate-spin text-indigo-600" />
-                <span className="text-xs text-slate-500">Searching clauses…</span>
+              <div
+                className="rounded-2xl rounded-bl-sm px-4 py-3 flex items-center gap-2"
+                style={{
+                  backgroundColor: "var(--surface)",
+                  border: "1px solid var(--border)",
+                }}
+              >
+                <Loader2
+                  className="h-4 w-4 animate-spin"
+                  style={{ color: "var(--primary)" }}
+                  strokeWidth={1.75}
+                />
+                <span className="text-xs" style={{ color: "var(--foreground-2)" }}>
+                  Searching clauses…
+                </span>
               </div>
             </div>
           )}
@@ -204,14 +249,22 @@ export default function AskPanel({ clauses, result, onShowInDocument }: AskPanel
       )}
 
       {/* Disclaimer */}
-      <div className="flex items-start gap-2 bg-slate-50 rounded-xl p-3 border border-slate-200">
-        <Info className="h-3.5 w-3.5 text-slate-400 shrink-0 mt-0.5" />
-        <p className="text-[11px] text-slate-500 leading-relaxed">
-          Answers are based only on the text in this document. Tap a <span className="font-bold text-indigo-700">[C#]</span> citation to jump to that clause. This is not legal advice.
+      <div
+        className="flex items-start gap-2 rounded-xl p-3"
+        style={{
+          backgroundColor: "var(--surface-2)",
+          border: "1px solid var(--border)",
+        }}
+      >
+        <Info className="h-3.5 w-3.5 shrink-0 mt-0.5" style={{ color: "var(--muted)" }} strokeWidth={1.75} />
+        <p className="text-[11px] leading-relaxed" style={{ color: "var(--muted)" }}>
+          Answers are based only on the text in this document. Tap a{" "}
+          <span className="font-bold" style={{ color: "var(--primary)" }}>[C#]</span>{" "}
+          citation to jump to that clause. This is not legal advice.
         </p>
       </div>
 
-      {/* Input box */}
+      {/* Input */}
       <form onSubmit={handleSubmit} className="flex gap-2">
         <input
           type="text"
@@ -219,16 +272,49 @@ export default function AskPanel({ clauses, result, onShowInDocument }: AskPanel
           onChange={(e) => setInput(e.target.value)}
           placeholder="Ask anything about this contract…"
           disabled={loading}
-          className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 min-h-[48px]"
+          className="flex-1 rounded-xl px-4 py-3 text-xs outline-none transition-all disabled:opacity-50"
+          style={{
+            backgroundColor: "var(--surface-2)",
+            color: "var(--foreground)",
+            border: "1px solid var(--border)",
+            minHeight: "48px",
+            fontSize: "16px",
+          }}
+          onFocus={(e) => {
+            e.target.style.borderColor = "var(--ring)";
+            e.target.style.boxShadow = "0 0 0 2px var(--primary-tint)";
+          }}
+          onBlur={(e) => {
+            e.target.style.borderColor = "var(--border)";
+            e.target.style.boxShadow = "none";
+          }}
           aria-label="Question input"
         />
         <button
           type="submit"
           disabled={!input.trim() || loading}
-          className="flex items-center justify-center rounded-xl bg-indigo-700 text-white px-4 min-h-[48px] min-w-[48px] hover:bg-indigo-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          className="flex items-center justify-center rounded-xl transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          style={{
+            backgroundColor: "var(--primary)",
+            color: "var(--primary-foreground)",
+            minHeight: "48px",
+            minWidth: "48px",
+            paddingLeft: "1rem",
+            paddingRight: "1rem",
+          }}
           aria-label="Send question"
+          onMouseEnter={(e) => {
+            if (!loading && input.trim()) (e.currentTarget as HTMLElement).style.backgroundColor = "var(--primary-hover)";
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLElement).style.backgroundColor = "var(--primary)";
+          }}
         >
-          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+          {loading ? (
+            <Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.75} />
+          ) : (
+            <Send className="h-4 w-4" strokeWidth={1.75} />
+          )}
         </button>
       </form>
     </div>

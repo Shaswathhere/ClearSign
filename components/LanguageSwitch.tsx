@@ -11,50 +11,51 @@ interface LanguageSwitchProps {
 }
 
 const LANGUAGES: { code: SupportedLocale; label: string; nativeLabel: string }[] = [
-  { code: "en", label: "English", nativeLabel: "EN" },
-  { code: "hi", label: "Hindi", nativeLabel: "हि" },
-  { code: "ta", label: "Tamil", nativeLabel: "த" },
-  { code: "te", label: "Telugu", nativeLabel: "తె" },
-  { code: "kn", label: "Kannada", nativeLabel: "ಕ" },
-  { code: "ml", label: "Malayalam", nativeLabel: "മ" },
-  { code: "bn", label: "Bengali", nativeLabel: "বা" },
-  { code: "mr", label: "Marathi", nativeLabel: "म" },
+  { code: "en", label: "English",    nativeLabel: "English" },
+  { code: "hi", label: "Hindi",      nativeLabel: "हिन्दी" },
+  { code: "ta", label: "Tamil",      nativeLabel: "தமிழ்" },
+  { code: "te", label: "Telugu",     nativeLabel: "తెలుగు" },
+  { code: "kn", label: "Kannada",    nativeLabel: "ಕನ್ನಡ" },
+  { code: "ml", label: "Malayalam",  nativeLabel: "മലയാളം" },
+  { code: "bn", label: "Bengali",    nativeLabel: "বাংলা" },
+  { code: "mr", label: "Marathi",    nativeLabel: "मराठी" },
 ];
 
 export default function LanguageSwitch({ current, onChange, isTranslating }: LanguageSwitchProps) {
+  const currentLang = LANGUAGES.find((l) => l.code === current);
+
   return (
-    <div className="flex items-center gap-1 flex-wrap" role="group" aria-label="Language selection">
-      {LANGUAGES.map((lang) => {
-        const isActive = lang.code === current;
-        return (
-          <button
-            key={lang.code}
-            type="button"
-            onClick={() => !isActive && onChange(lang.code)}
-            disabled={isTranslating}
-            aria-label={lang.label}
-            aria-pressed={isActive}
-            title={lang.label}
-            className={`
-              min-h-[36px] min-w-[36px] px-2 py-1 rounded-lg text-xs font-bold transition-all
-              disabled:opacity-50 disabled:cursor-not-allowed
-              ${isActive
-                ? "bg-indigo-700 text-white shadow-sm"
-                : "bg-white text-slate-600 border border-slate-200 hover:border-indigo-400 hover:text-indigo-700"
-              }
-            `}
-          >
-            {isTranslating && !isActive ? (
-              <span className="inline-block animate-pulse">{lang.nativeLabel}</span>
-            ) : (
-              lang.nativeLabel
-            )}
-          </button>
-        );
-      })}
+    <div className="flex items-center gap-2">
       {isTranslating && (
-        <span className="text-[10px] text-indigo-600 font-medium animate-pulse">Translating…</span>
+        <span className="text-[11px] font-medium animate-pulse" style={{ color: "var(--primary)" }}>
+          Translating…
+        </span>
       )}
+      <select
+        id="language-select"
+        aria-label="Select language"
+        value={current}
+        disabled={isTranslating}
+        onChange={(e) => onChange(e.target.value as SupportedLocale)}
+        className="rounded-xl text-xs font-semibold px-3 py-2 outline-none transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+        style={{
+          backgroundColor: "var(--surface-2)",
+          color: "var(--foreground)",
+          border: "1px solid var(--border-strong)",
+          minHeight: "36px",
+          minWidth: "120px",
+        }}
+        onFocus={(e) => { e.target.style.borderColor = "var(--ring)"; e.target.style.boxShadow = "0 0 0 2px var(--primary-tint)"; }}
+        onBlur={(e) => { e.target.style.borderColor = "var(--border-strong)"; e.target.style.boxShadow = "none"; }}
+      >
+        {LANGUAGES.map((lang) => (
+          <option key={lang.code} value={lang.code}>
+            {lang.nativeLabel}
+          </option>
+        ))}
+      </select>
+      {/* Screen-reader label for current selection */}
+      <span className="sr-only">Current language: {currentLang?.label}</span>
     </div>
   );
 }

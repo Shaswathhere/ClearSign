@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useState, useMemo, useCallback } from "react";
-import { Calendar, Download, ChevronDown, ChevronUp, AlertTriangle, Clock, DollarSign, Info } from "lucide-react";
+import {
+  Calendar, Download, ChevronDown, ChevronUp, AlertTriangle, Clock, DollarSign, Info,
+} from "lucide-react";
 import { AnalyzeResponse } from "@/lib/schema";
 import type { RelativeRule } from "@/lib/schema";
 import { resolveDeadlines, ResolvedDeadline } from "@/lib/dates";
@@ -12,25 +14,53 @@ interface DatesCostsPanelProps {
   result: AnalyzeResponse;
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── Helpers ───────────────────────────────────────────────────────────────────
 
 function formatINR(n: number): string {
-  return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n);
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 0,
+  }).format(n);
 }
 
 function DaysChip({ days }: { days: number | null }) {
   if (days === null) return null;
-  if (days < 0) return <span className="inline-flex items-center gap-1 rounded-full bg-rose-100 text-rose-700 px-2 py-0.5 text-[10px] font-bold">PAST</span>;
-  if (days <= 7) return <span className="inline-flex items-center gap-1 rounded-full bg-rose-100 text-rose-700 px-2 py-0.5 text-[10px] font-bold">⚠ {days}d left</span>;
-  if (days <= 30) return <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 text-amber-700 px-2 py-0.5 text-[10px] font-bold">{days}d away</span>;
-  return <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 text-slate-600 px-2 py-0.5 text-[10px] font-bold">{days}d away</span>;
+  if (days < 0) return (
+    <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold"
+      style={{ backgroundColor: "var(--sev-high-tint)", color: "var(--sev-high)" }}>
+      PAST
+    </span>
+  );
+  if (days <= 7) return (
+    <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold"
+      style={{ backgroundColor: "var(--sev-high-tint)", color: "var(--sev-high)" }}>
+      <AlertTriangle className="h-3 w-3" strokeWidth={1.75} />
+      {days}d left
+    </span>
+  );
+  if (days <= 30) return (
+    <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold"
+      style={{ backgroundColor: "var(--sev-med-tint)", color: "var(--sev-med)" }}>
+      {days}d away
+    </span>
+  );
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold"
+      style={{ backgroundColor: "var(--surface-2)", color: "var(--foreground-2)", border: "1px solid var(--border)" }}>
+      {days}d away
+    </span>
+  );
 }
 
 function WorkingRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex justify-between text-xs py-1 border-b border-slate-100 last:border-0">
-      <span className="text-slate-500">{label}</span>
-      <span className="font-semibold text-slate-800">{value}</span>
+    <div
+      className="flex justify-between text-xs py-1.5 border-b last:border-0"
+      style={{ borderColor: "var(--border)" }}
+    >
+      <span style={{ color: "var(--foreground-2)" }}>{label}</span>
+      <span className="font-semibold" style={{ color: "var(--foreground)" }}>{value}</span>
     </div>
   );
 }
@@ -42,13 +72,17 @@ function ShowWorking({ children }: { children: React.ReactNode }) {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-1 text-[11px] font-semibold text-indigo-700 hover:text-indigo-800 transition-colors"
+        className="flex items-center gap-1 text-[11px] font-semibold transition-colors"
+        style={{ color: "var(--primary)" }}
       >
-        {open ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+        {open ? <ChevronUp className="h-3.5 w-3.5" strokeWidth={1.75} /> : <ChevronDown className="h-3.5 w-3.5" strokeWidth={1.75} />}
         Show working
       </button>
       {open && (
-        <div className="mt-2 bg-slate-50 rounded-xl p-3 border border-slate-200 space-y-0">
+        <div
+          className="mt-2 rounded-xl p-3 space-y-0"
+          style={{ backgroundColor: "var(--background)", border: "1px solid var(--border)" }}
+        >
           {children}
         </div>
       )}
@@ -72,8 +106,8 @@ function DeadlinesSection({ result }: { result: AnalyzeResponse }) {
 
   const [anchorDates, setAnchorDates] = useState<Partial<Record<AnchorKey, string>>>({});
 
-  const resolved = useMemo<ResolvedDeadline[]>(() =>
-    resolveDeadlines(result.deadlines, anchorDates),
+  const resolved = useMemo<ResolvedDeadline[]>(
+    () => resolveDeadlines(result.deadlines, anchorDates),
     [result.deadlines, anchorDates]
   );
 
@@ -84,12 +118,22 @@ function DeadlinesSection({ result }: { result: AnalyzeResponse }) {
     downloadIcs(content);
   }, [resolved]);
 
-  const icsCount = useMemo(() => resolved.filter((d) => d.isoDate && !d.isPast).length, [resolved]);
+  const icsCount = useMemo(
+    () => resolved.filter((d) => d.isoDate && !d.isPast).length,
+    [resolved]
+  );
 
   if (!result.deadlines.length) {
     return (
-      <div className="flex items-center gap-3 p-5 bg-slate-50 rounded-2xl border border-slate-200 text-sm text-slate-500">
-        <Calendar className="h-5 w-5 text-slate-400 shrink-0" />
+      <div
+        className="flex items-center gap-3 p-5 rounded-2xl text-sm"
+        style={{
+          backgroundColor: "var(--surface-2)",
+          border: "1px solid var(--border)",
+          color: "var(--foreground-2)",
+        }}
+      >
+        <Calendar className="h-5 w-5 shrink-0" style={{ color: "var(--muted)" }} strokeWidth={1.75} />
         No time-sensitive deadlines were found in this document.
       </div>
     );
@@ -107,18 +151,39 @@ function DeadlinesSection({ result }: { result: AnalyzeResponse }) {
     <div className="space-y-4">
       {/* Anchor date pickers */}
       {anchorTypes.length > 0 && (
-        <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 space-y-3">
-          <p className="text-xs font-semibold text-blue-800 flex items-center gap-1.5">
-            <Info className="h-3.5 w-3.5" />
+        <div
+          className="rounded-2xl p-4 space-y-3"
+          style={{
+            backgroundColor: "var(--primary-tint)",
+            border: "1px solid var(--primary-border)",
+          }}
+        >
+          <p
+            className="text-xs font-semibold flex items-center gap-1.5"
+            style={{ color: "var(--primary)" }}
+          >
+            <Info className="h-3.5 w-3.5" strokeWidth={1.75} />
             Set dates from your contract to resolve deadlines
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {anchorTypes.map((key) => (
               <div key={key} className="space-y-1">
-                <label className="text-[11px] font-semibold text-blue-700 block">{anchorLabels[key]}</label>
+                <label
+                  className="text-[11px] font-semibold block"
+                  style={{ color: "var(--primary)" }}
+                >
+                  {anchorLabels[key]}
+                </label>
                 <input
                   type="date"
-                  className="w-full rounded-xl border border-blue-200 bg-white px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full rounded-xl px-3 py-2 text-xs outline-none transition-all"
+                  style={{
+                    backgroundColor: "var(--surface-2)",
+                    color: "var(--foreground)",
+                    border: "1px solid var(--border)",
+                  }}
+                  onFocus={(e) => { e.target.style.borderColor = "var(--ring)"; }}
+                  onBlur={(e) => { e.target.style.borderColor = "var(--border)"; }}
                   value={anchorDates[key] || ""}
                   onChange={(e) => setAnchorDates((prev) => ({ ...prev, [key]: e.target.value }))}
                 />
@@ -133,23 +198,53 @@ function DeadlinesSection({ result }: { result: AnalyzeResponse }) {
         {resolved.map((d, i) => (
           <div
             key={`${d.clauseId}-${i}`}
-            className={`rounded-2xl border p-4 space-y-2 ${d.isPast ? "bg-slate-50 border-slate-200 opacity-60" : "bg-white border-slate-200"}`}
+            className="rounded-2xl p-4 space-y-2"
+            style={{
+              backgroundColor: d.isPast ? "var(--surface-2)" : "var(--surface)",
+              border: "1px solid var(--border)",
+              opacity: d.isPast ? 0.6 : 1,
+            }}
           >
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-2 min-w-0">
-                <Clock className={`h-4 w-4 shrink-0 ${d.isPast ? "text-slate-400" : "text-indigo-600"}`} />
-                <span className="text-xs font-bold text-slate-800 truncate">{d.label}</span>
-                <span className="shrink-0 text-[10px] font-bold bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded-full">{d.clauseId}</span>
+                <Clock
+                  className="h-4 w-4 shrink-0"
+                  style={{ color: d.isPast ? "var(--muted)" : "var(--primary)" }}
+                  strokeWidth={1.75}
+                />
+                <span className="text-xs font-bold truncate" style={{ color: "var(--foreground)" }}>
+                  {d.label}
+                </span>
+                <span
+                  className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full font-mono"
+                  style={{
+                    backgroundColor: "var(--primary-tint)",
+                    color: "var(--primary)",
+                    border: "1px solid var(--primary-border)",
+                  }}
+                >
+                  {d.clauseId}
+                </span>
               </div>
               <DaysChip days={d.daysFromNow} />
             </div>
             {d.formattedDate && (
-              <p className="text-xs font-semibold text-slate-700 ml-6">{d.formattedDate}</p>
+              <p className="text-xs font-semibold ml-6" style={{ color: "var(--foreground)" }}>
+                {d.formattedDate}
+              </p>
             )}
             {!d.formattedDate && (
-              <p className="text-[11px] text-slate-400 ml-6 italic">Set the anchor date above to resolve this deadline.</p>
+              <p className="text-[11px] ml-6 italic" style={{ color: "var(--muted)" }}>
+                Set the anchor date above to resolve this deadline.
+              </p>
             )}
-            <blockquote className="text-[11px] text-slate-500 italic border-l-2 border-slate-200 pl-3 ml-6 leading-relaxed">
+            <blockquote
+              className="text-[11px] italic pl-3 ml-6 leading-relaxed"
+              style={{
+                color: "var(--foreground-2)",
+                borderLeft: "2px solid var(--border-strong)",
+              }}
+            >
               &ldquo;{d.quote.slice(0, 180)}{d.quote.length > 180 ? "…" : ""}&rdquo;
             </blockquote>
           </div>
@@ -161,11 +256,54 @@ function DeadlinesSection({ result }: { result: AnalyzeResponse }) {
         type="button"
         onClick={handleDownloadIcs}
         disabled={icsCount === 0}
-        className="flex items-center gap-2 rounded-xl bg-indigo-700 text-white text-xs font-semibold px-4 py-2.5 hover:bg-indigo-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed min-h-[48px]"
+        className="flex items-center gap-2 text-xs font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+        style={{
+          height: "48px",
+          borderRadius: "0.75rem",
+          backgroundColor: "var(--primary)",
+          color: "var(--primary-foreground)",
+          paddingLeft: "1rem",
+          paddingRight: "1rem",
+        }}
+        onMouseEnter={(e) => {
+          if (icsCount > 0) (e.currentTarget as HTMLElement).style.backgroundColor = "var(--primary-hover)";
+        }}
+        onMouseLeave={(e) => {
+          (e.currentTarget as HTMLElement).style.backgroundColor = "var(--primary)";
+        }}
       >
-        <Download className="h-4 w-4" />
-        Download Calendar Reminders ({icsCount} event{icsCount !== 1 ? "s" : ""}) .ics
+        <Download className="h-4 w-4" strokeWidth={1.75} />
+        Add to calendar ({icsCount} event{icsCount !== 1 ? "s" : ""}) .ics
       </button>
+    </div>
+  );
+}
+
+// ─── Stat tile helper ──────────────────────────────────────────────────────────
+
+function StatTile({
+  label,
+  value,
+  valueColor,
+}: {
+  label: string;
+  value: string;
+  valueColor?: string;
+}) {
+  return (
+    <div
+      className="rounded-xl p-3 text-center"
+      style={{ backgroundColor: "var(--surface-2)", border: "1px solid var(--border)" }}
+    >
+      <p className="text-[11px] font-medium" style={{ color: "var(--foreground-2)" }}>
+        {label}
+      </p>
+      <p
+        className="text-lg font-extrabold"
+        style={{ color: valueColor ?? "var(--foreground)" }}
+      >
+        {value}
+      </p>
     </div>
   );
 }
@@ -175,55 +313,52 @@ function DeadlinesSection({ result }: { result: AnalyzeResponse }) {
 function LoanSection({ loan }: { loan: NonNullable<AnalyzeResponse["terms"]["loan"]> }) {
   const breakdown = useMemo(() => calcLoan(loan), [loan]);
   const [exitMonth, setExitMonth] = useState(Math.floor(loan.tenureMonths / 2));
-  const prepay = useMemo(() => breakdown.prepaymentCost(exitMonth), [breakdown, exitMonth]);
-
-  const worstCase = Math.max(
-    breakdown.totalInterest,
-    prepay.outstandingPrincipal + prepay.penaltyAmount
+  const prepay = useMemo(
+    () => breakdown.prepaymentCost(exitMonth),
+    [breakdown, exitMonth]
   );
+  const worstCase = Math.max(breakdown.totalInterest, prepay.outstandingPrincipal + prepay.penaltyAmount);
 
   return (
     <div className="space-y-4">
       {/* Worst-case headline */}
-      <div className="bg-rose-50 border border-rose-200 rounded-2xl p-4 flex items-start gap-3">
-        <AlertTriangle className="h-5 w-5 text-rose-600 shrink-0 mt-0.5" />
+      <div
+        className="rounded-2xl p-4 flex items-start gap-3"
+        style={{
+          backgroundColor: "var(--sev-high-tint)",
+          border: "1px solid var(--sev-high)",
+        }}
+      >
+        <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" style={{ color: "var(--sev-high)" }} strokeWidth={1.75} />
         <div>
-          <p className="text-xs font-semibold text-rose-800">Worst-case cost</p>
-          <p className="text-2xl font-extrabold text-rose-700">{formatINR(worstCase)}</p>
-          <p className="text-[11px] text-rose-600 mt-0.5">Estimate based on the terms found in your document.</p>
+          <p className="text-xs font-semibold" style={{ color: "var(--sev-high)" }}>Worst-case cost</p>
+          <p className="text-2xl font-extrabold" style={{ color: "var(--sev-high)" }}>{formatINR(worstCase)}</p>
+          <p className="text-[11px] mt-0.5" style={{ color: "var(--foreground-2)" }}>
+            Estimate based on the terms found in your document.
+          </p>
         </div>
       </div>
 
-      {/* Monthly EMI card */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-3">
-        <div className="flex items-center gap-2 text-sm font-bold text-slate-800">
-          <DollarSign className="h-4 w-4 text-indigo-600" />
+      <div
+        className="rounded-2xl p-4 space-y-3 border"
+        style={{ backgroundColor: "var(--surface)", borderColor: "var(--border)" }}
+      >
+        <div className="flex items-center gap-2 text-sm font-bold" style={{ color: "var(--foreground)" }}>
+          <DollarSign className="h-4 w-4" style={{ color: "var(--primary)" }} strokeWidth={1.75} />
           Loan Breakdown
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-slate-50 rounded-xl p-3 text-center">
-            <p className="text-[11px] text-slate-500 font-medium">Monthly EMI</p>
-            <p className="text-lg font-extrabold text-slate-900">{formatINR(breakdown.emi)}</p>
-          </div>
-          <div className="bg-slate-50 rounded-xl p-3 text-center">
-            <p className="text-[11px] text-slate-500 font-medium">Total Interest</p>
-            <p className="text-lg font-extrabold text-amber-700">{formatINR(breakdown.totalInterest)}</p>
-          </div>
-          <div className="bg-slate-50 rounded-xl p-3 text-center">
-            <p className="text-[11px] text-slate-500 font-medium">Total Payable</p>
-            <p className="text-lg font-extrabold text-slate-900">{formatINR(breakdown.totalPayable)}</p>
-          </div>
-          <div className="bg-slate-50 rounded-xl p-3 text-center">
-            <p className="text-[11px] text-slate-500 font-medium">Processing Fee</p>
-            <p className="text-lg font-extrabold text-slate-700">{formatINR(breakdown.processingFee)}</p>
-          </div>
+          <StatTile label="Monthly EMI"    value={formatINR(breakdown.emi)} />
+          <StatTile label="Total Interest" value={formatINR(breakdown.totalInterest)} valueColor="var(--sev-med)" />
+          <StatTile label="Total Payable"  value={formatINR(breakdown.totalPayable)} />
+          <StatTile label="Processing Fee" value={formatINR(breakdown.processingFee)} />
         </div>
 
-        {/* Prepayment interactive slider */}
-        <div className="pt-2 border-t border-slate-100 space-y-2">
-          <div className="flex justify-between items-center text-xs font-semibold text-slate-700">
-            <span>Prepay after month {exitMonth}</span>
-            <span className="text-indigo-700 font-bold">{exitMonth} of {loan.tenureMonths} mo</span>
+        {/* Prepayment slider */}
+        <div className="pt-2 border-t space-y-2" style={{ borderColor: "var(--border)" }}>
+          <div className="flex justify-between items-center text-xs font-semibold">
+            <span style={{ color: "var(--foreground-2)" }}>Prepay after month {exitMonth}</span>
+            <span style={{ color: "var(--primary)" }}>{exitMonth} of {loan.tenureMonths} mo</span>
           </div>
           <input
             type="range"
@@ -231,38 +366,30 @@ function LoanSection({ loan }: { loan: NonNullable<AnalyzeResponse["terms"]["loa
             max={loan.tenureMonths - 1}
             value={exitMonth}
             onChange={(e) => setExitMonth(Number(e.target.value))}
-            className="w-full accent-indigo-600"
+            className="w-full"
+            style={{ accentColor: "var(--primary)" }}
           />
           <div className="grid grid-cols-2 gap-3 pt-1">
-            <div className="bg-emerald-50 rounded-xl p-3 text-center">
-              <p className="text-[11px] text-emerald-700 font-medium">Interest saved</p>
-              <p className="text-base font-extrabold text-emerald-800">{formatINR(prepay.interestSaved)}</p>
-            </div>
-            <div className="bg-rose-50 rounded-xl p-3 text-center">
-              <p className="text-[11px] text-rose-700 font-medium">Penalty fee</p>
-              <p className="text-base font-extrabold text-rose-800">{formatINR(prepay.penaltyAmount)}</p>
-            </div>
+            <StatTile label="Interest saved" value={formatINR(prepay.interestSaved)} valueColor="var(--sev-low)" />
+            <StatTile label="Penalty fee"    value={formatINR(prepay.penaltyAmount)} valueColor="var(--sev-high)" />
           </div>
-          <p className="text-[11px] text-slate-500 text-center">
-            Net savings by prepaying: <strong className="text-emerald-700">{formatINR(prepay.netSavings)}</strong>
+          <p className="text-[11px] text-center" style={{ color: "var(--foreground-2)" }}>
+            Net savings by prepaying:{" "}
+            <strong style={{ color: "var(--sev-low)" }}>{formatINR(prepay.netSavings)}</strong>
           </p>
         </div>
 
-        {/* Show working accordion */}
         <ShowWorking>
-          <WorkingRow label="Principal (P)" value={formatINR(loan.principal)} />
-          <WorkingRow label="Annual Interest Rate (R)" value={`${loan.annualRatePct}% p.a.`} />
-          <WorkingRow label="Tenure (N)" value={`${loan.tenureMonths} months`} />
-          <WorkingRow
-            label="Formula: P × r × (1+r)ᴺ / ((1+r)ᴺ - 1)"
-            value={`Monthly r = ${(loan.annualRatePct / 12).toFixed(3)}%`}
-          />
-          <WorkingRow label="Total Interest = (EMI × N) - P" value={formatINR(breakdown.totalInterest)} />
+          <WorkingRow label="Principal (P)"                       value={formatINR(loan.principal)} />
+          <WorkingRow label="Annual Interest Rate (R)"            value={`${loan.annualRatePct}% p.a.`} />
+          <WorkingRow label="Tenure (N)"                          value={`${loan.tenureMonths} months`} />
+          <WorkingRow label="Formula: P × r × (1+r)ᴺ / ((1+r)ᴺ - 1)" value={`Monthly r = ${(loan.annualRatePct / 12).toFixed(3)}%`} />
+          <WorkingRow label="Total Interest = (EMI × N) - P"     value={formatINR(breakdown.totalInterest)} />
           {loan.processingFeePct != null && (
             <WorkingRow label={`Processing fee (${loan.processingFeePct}%)`} value={formatINR(breakdown.processingFee)} />
           )}
           {loan.prepaymentPenaltyPct != null && (
-            <WorkingRow label={`Prepayment penalty`} value={`${loan.prepaymentPenaltyPct}% of outstanding`} />
+            <WorkingRow label="Prepayment penalty" value={`${loan.prepaymentPenaltyPct}% of outstanding`} />
           )}
         </ShowWorking>
       </div>
@@ -276,41 +403,39 @@ function SubscriptionSection({ sub }: { sub: NonNullable<AnalyzeResponse["terms"
 
   return (
     <div className="space-y-4">
-      <div className="bg-rose-50 border border-rose-200 rounded-2xl p-4 flex items-start gap-3">
-        <AlertTriangle className="h-5 w-5 text-rose-600 shrink-0 mt-0.5" />
+      <div
+        className="rounded-2xl p-4 flex items-start gap-3"
+        style={{ backgroundColor: "var(--sev-high-tint)", border: "1px solid var(--sev-high)" }}
+      >
+        <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" style={{ color: "var(--sev-high)" }} strokeWidth={1.75} />
         <div>
-          <p className="text-xs font-semibold text-rose-800">Worst-case cost if you miss the cancel window</p>
-          <p className="text-2xl font-extrabold text-rose-700">{formatINR(worstCase)}</p>
-          <p className="text-[11px] text-rose-600 mt-0.5">Estimate based on the terms found in your document.</p>
+          <p className="text-xs font-semibold" style={{ color: "var(--sev-high)" }}>
+            Worst-case cost if you miss the cancel window
+          </p>
+          <p className="text-2xl font-extrabold" style={{ color: "var(--sev-high)" }}>{formatINR(worstCase)}</p>
+          <p className="text-[11px] mt-0.5" style={{ color: "var(--foreground-2)" }}>
+            Estimate based on the terms found in your document.
+          </p>
         </div>
       </div>
-      <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-3">
-        <div className="flex items-center gap-2 text-sm font-bold text-slate-800">
-          <DollarSign className="h-4 w-4 text-indigo-600" />
+      <div
+        className="rounded-2xl p-4 space-y-3 border"
+        style={{ backgroundColor: "var(--surface)", borderColor: "var(--border)" }}
+      >
+        <div className="flex items-center gap-2 text-sm font-bold" style={{ color: "var(--foreground)" }}>
+          <DollarSign className="h-4 w-4" style={{ color: "var(--primary)" }} strokeWidth={1.75} />
           Subscription Breakdown
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-slate-50 rounded-xl p-3 text-center">
-            <p className="text-[11px] text-slate-500 font-medium">Per Month</p>
-            <p className="text-lg font-extrabold text-slate-900">{formatINR(breakdown.pricePerMonth)}</p>
-          </div>
-          <div className="bg-slate-50 rounded-xl p-3 text-center">
-            <p className="text-[11px] text-slate-500 font-medium">Annual Renewal Cost</p>
-            <p className="text-lg font-extrabold text-slate-900">{formatINR(breakdown.pricePerYear)}</p>
-          </div>
-          <div className="bg-slate-50 rounded-xl p-3 text-center">
-            <p className="text-[11px] text-slate-500 font-medium">Early Exit Fee</p>
-            <p className="text-lg font-extrabold text-rose-700">{formatINR(breakdown.exitCost)}</p>
-          </div>
-          <div className="bg-slate-50 rounded-xl p-3 text-center">
-            <p className="text-[11px] text-slate-500 font-medium">Auto-Renews?</p>
-            <p className="text-base font-extrabold text-slate-900">{sub.autoRenews ? "⚠ Yes" : "No"}</p>
-          </div>
+          <StatTile label="Per Month"          value={formatINR(breakdown.pricePerMonth)} />
+          <StatTile label="Annual Renewal Cost" value={formatINR(breakdown.pricePerYear)} />
+          <StatTile label="Early Exit Fee"      value={formatINR(breakdown.exitCost)} valueColor="var(--sev-high)" />
+          <StatTile label="Auto-Renews?"        value={sub.autoRenews ? "Yes" : "No"} valueColor={sub.autoRenews ? "var(--sev-high)" : "var(--sev-low)"} />
         </div>
         <ShowWorking>
-          <WorkingRow label="Billed price" value={formatINR(sub.price)} />
-          <WorkingRow label="Billing period" value={`${sub.billingPeriodMonths} months`} />
-          <WorkingRow label="Monthly cost" value={formatINR(breakdown.pricePerMonth)} />
+          <WorkingRow label="Billed price"       value={formatINR(sub.price)} />
+          <WorkingRow label="Billing period"     value={`${sub.billingPeriodMonths} months`} />
+          <WorkingRow label="Monthly cost"       value={formatINR(breakdown.pricePerMonth)} />
           <WorkingRow label="Annual = monthly × 12" value={formatINR(breakdown.pricePerYear)} />
           {sub.cancelNoticeDays != null && (
             <WorkingRow label="Cancel notice required" value={`${sub.cancelNoticeDays} days`} />
@@ -325,57 +450,57 @@ function RentalSection({ rental }: { rental: NonNullable<AnalyzeResponse["terms"
   const breakdown = useMemo(() => calcRental(rental), [rental]);
   const [exitMonth, setExitMonth] = useState(Math.min(3, (rental.lockInMonths ?? 6) - 1));
   const exit = useMemo(() => breakdown.earlyExitCost(exitMonth), [breakdown, exitMonth]);
-
   const worstCase = exit.totalLiability + (rental.deposit ?? 0);
 
   return (
     <div className="space-y-4">
-      <div className="bg-rose-50 border border-rose-200 rounded-2xl p-4 flex items-start gap-3">
-        <AlertTriangle className="h-5 w-5 text-rose-600 shrink-0 mt-0.5" />
+      <div
+        className="rounded-2xl p-4 flex items-start gap-3"
+        style={{ backgroundColor: "var(--sev-high-tint)", border: "1px solid var(--sev-high)" }}
+      >
+        <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" style={{ color: "var(--sev-high)" }} strokeWidth={1.75} />
         <div>
-          <p className="text-xs font-semibold text-rose-800">Worst-case cost if you exit early</p>
-          <p className="text-2xl font-extrabold text-rose-700">{formatINR(worstCase)}</p>
-          <p className="text-[11px] text-rose-600 mt-0.5">Estimate based on the terms found in your document.</p>
+          <p className="text-xs font-semibold" style={{ color: "var(--sev-high)" }}>Worst-case cost if you exit early</p>
+          <p className="text-2xl font-extrabold" style={{ color: "var(--sev-high)" }}>{formatINR(worstCase)}</p>
+          <p className="text-[11px] mt-0.5" style={{ color: "var(--foreground-2)" }}>
+            Estimate based on the terms found in your document.
+          </p>
         </div>
       </div>
-      <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-3">
-        <div className="flex items-center gap-2 text-sm font-bold text-slate-800">
-          <DollarSign className="h-4 w-4 text-indigo-600" />
+      <div
+        className="rounded-2xl p-4 space-y-3 border"
+        style={{ backgroundColor: "var(--surface)", borderColor: "var(--border)" }}
+      >
+        <div className="flex items-center gap-2 text-sm font-bold" style={{ color: "var(--foreground)" }}>
+          <DollarSign className="h-4 w-4" style={{ color: "var(--primary)" }} strokeWidth={1.75} />
           Rental Breakdown
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-slate-50 rounded-xl p-3 text-center">
-            <p className="text-[11px] text-slate-500 font-medium">Monthly Rent</p>
-            <p className="text-lg font-extrabold text-slate-900">{formatINR(rental.monthlyRent)}</p>
-          </div>
-          <div className="bg-slate-50 rounded-xl p-3 text-center">
-            <p className="text-[11px] text-slate-500 font-medium">Security Deposit</p>
-            <p className="text-lg font-extrabold text-slate-900">{formatINR(rental.deposit ?? 0)}</p>
-          </div>
-          <div className="bg-slate-50 rounded-xl p-3 text-center">
-            <p className="text-[11px] text-slate-500 font-medium">Lock-in Period</p>
-            <p className="text-lg font-extrabold text-slate-900">{rental.lockInMonths ? `${rental.lockInMonths} mo` : "None"}</p>
-          </div>
-          <div className="bg-slate-50 rounded-xl p-3 text-center">
-            <p className="text-[11px] text-slate-500 font-medium">Notice Period</p>
-            <p className="text-lg font-extrabold text-slate-900">{rental.noticeMonths ? `${rental.noticeMonths} mo` : "None"}</p>
-          </div>
+          <StatTile label="Monthly Rent"    value={formatINR(rental.monthlyRent)} />
+          <StatTile label="Security Deposit" value={formatINR(rental.deposit ?? 0)} />
+          <StatTile label="Lock-in Period"  value={rental.lockInMonths ? `${rental.lockInMonths} mo` : "None"} />
+          <StatTile label="Notice Period"   value={rental.noticeMonths ? `${rental.noticeMonths} mo` : "None"} />
         </div>
 
-        {/* Lock-in total */}
         {rental.lockInMonths && rental.lockInMonths > 0 && (
-          <div className="bg-amber-50 rounded-xl p-3 text-xs flex justify-between items-center text-amber-900 font-medium">
+          <div
+            className="rounded-xl p-3 text-xs flex justify-between items-center font-medium"
+            style={{
+              backgroundColor: "var(--sev-med-tint)",
+              color: "var(--sev-med)",
+              border: "1px solid var(--sev-med)",
+            }}
+          >
             <span>Guaranteed rent for lock-in ({rental.lockInMonths} months):</span>
             <span className="font-extrabold">{formatINR(breakdown.lockInTotalRent)}</span>
           </div>
         )}
 
-        {/* Early exit interactive slider */}
         {rental.lockInMonths && rental.lockInMonths > 1 && (
-          <div className="pt-2 border-t border-slate-100 space-y-2">
-            <div className="flex justify-between items-center text-xs font-semibold text-slate-700">
-              <span>Exit after month {exitMonth}</span>
-              <span className="text-indigo-700 font-bold">{exitMonth} of {rental.lockInMonths} mo</span>
+          <div className="pt-2 border-t space-y-2" style={{ borderColor: "var(--border)" }}>
+            <div className="flex justify-between items-center text-xs font-semibold">
+              <span style={{ color: "var(--foreground-2)" }}>Exit after month {exitMonth}</span>
+              <span style={{ color: "var(--primary)" }}>{exitMonth} of {rental.lockInMonths} mo</span>
             </div>
             <input
               type="range"
@@ -383,17 +508,12 @@ function RentalSection({ rental }: { rental: NonNullable<AnalyzeResponse["terms"
               max={rental.lockInMonths - 1}
               value={exitMonth}
               onChange={(e) => setExitMonth(Number(e.target.value))}
-              className="w-full accent-indigo-600"
+              className="w-full"
+              style={{ accentColor: "var(--primary)" }}
             />
             <div className="grid grid-cols-2 gap-3 pt-1">
-              <div className="bg-amber-50 rounded-xl p-3 text-center">
-                <p className="text-[11px] text-amber-700 font-medium">Rent for remaining lock-in</p>
-                <p className="text-base font-extrabold text-amber-800">{formatINR(exit.rentForRemaining)}</p>
-              </div>
-              <div className="bg-rose-50 rounded-xl p-3 text-center">
-                <p className="text-[11px] text-rose-700 font-medium">Deposit at risk</p>
-                <p className="text-base font-extrabold text-rose-800">{formatINR(exit.deposit)}</p>
-              </div>
+              <StatTile label="Rent for remaining lock-in" value={formatINR(exit.rentForRemaining)} valueColor="var(--sev-med)" />
+              <StatTile label="Deposit at risk" value={formatINR(exit.deposit)} valueColor="var(--sev-high)" />
             </div>
           </div>
         )}
@@ -421,8 +541,11 @@ export default function DatesCostsPanel({ result }: DatesCostsPanelProps) {
     <div className="space-y-8">
       {/* Deadlines */}
       <section>
-        <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-2">
-          <Calendar className="h-4 w-4 text-indigo-700" />
+        <h3
+          className="text-sm font-bold uppercase tracking-wider mb-4 flex items-center gap-2"
+          style={{ color: "var(--foreground)" }}
+        >
+          <Calendar className="h-4 w-4" style={{ color: "var(--primary)" }} strokeWidth={1.75} />
           Key Deadlines
         </h3>
         <DeadlinesSection result={result} />
@@ -430,25 +553,35 @@ export default function DatesCostsPanel({ result }: DatesCostsPanelProps) {
 
       {/* Costs */}
       <section>
-        <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-2">
-          <DollarSign className="h-4 w-4 text-indigo-700" />
+        <h3
+          className="text-sm font-bold uppercase tracking-wider mb-4 flex items-center gap-2"
+          style={{ color: "var(--foreground)" }}
+        >
+          <DollarSign className="h-4 w-4" style={{ color: "var(--primary)" }} strokeWidth={1.75} />
           Financial Summary
         </h3>
         {!hasTerms ? (
-          <div className="flex items-center gap-3 p-5 bg-slate-50 rounded-2xl border border-slate-200 text-sm text-slate-500">
-            <Info className="h-5 w-5 text-slate-400 shrink-0" />
+          <div
+            className="flex items-center gap-3 p-5 rounded-2xl text-sm"
+            style={{
+              backgroundColor: "var(--surface-2)",
+              border: "1px solid var(--border)",
+              color: "var(--foreground-2)",
+            }}
+          >
+            <Info className="h-5 w-5 shrink-0" style={{ color: "var(--muted)" }} strokeWidth={1.75} />
             No financial terms (loan, subscription, or rental) were extracted from this document.
           </div>
         ) : (
           <div className="space-y-6">
-            {result.terms.loan && <LoanSection loan={result.terms.loan} />}
+            {result.terms.loan         && <LoanSection         loan={result.terms.loan} />}
             {result.terms.subscription && <SubscriptionSection sub={result.terms.subscription} />}
-            {result.terms.rental && <RentalSection rental={result.terms.rental} />}
+            {result.terms.rental       && <RentalSection       rental={result.terms.rental} />}
           </div>
         )}
       </section>
 
-      <p className="text-[11px] text-slate-400 text-center pb-2">
+      <p className="text-[11px] text-center pb-2" style={{ color: "var(--muted)" }}>
         All figures are estimates based on terms found in the document. Verify with your lender or landlord.
       </p>
     </div>

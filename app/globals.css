@@ -1,102 +1,184 @@
 @import "tailwindcss";
 
-/* ─── Indigo Ink: Light Mode Tokens ─────────────────────────────────────────── */
+/* ─── Amber-Dark Design Tokens ──────────────────────────────────────────────── */
 :root {
   /* Font variables (loaded via next/font in layout.tsx) */
-  --font-primary: 'Geist', system-ui, -apple-system, sans-serif;
+  --font-primary: 'Inter', system-ui, -apple-system, sans-serif;
   --font-noto-devanagari: 'Noto Sans Devanagari', sans-serif;
-  --font-noto-tamil: 'Noto Sans Tamil', sans-serif;
+  --font-noto-tamil:      'Noto Sans Tamil', sans-serif;
+  --font-noto-telugu:     'Noto Sans Telugu', sans-serif;
+  --font-noto-kannada:    'Noto Sans Kannada', sans-serif;
+  --font-noto-malayalam:  'Noto Sans Malayalam', sans-serif;
+  --font-noto-bengali:    'Noto Sans Bengali', sans-serif;
 
-  /* Brand — Indigo Ink */
-  --brand-50:  #eef2ff;
-  --brand-100: #e0e7ff;
-  --brand-200: #c7d2fe;
-  --brand-300: #a5b4fc;
-  --brand-400: #818cf8;
-  --brand-500: #6366f1;
-  --brand-600: #4f46e5;
-  --brand-700: #4338ca;
-  --brand-800: #3730a3;
-  --brand-900: #312e81;
-  --brand-950: #1e1b4b;
+  /* ── Surfaces ── */
+  --background:     #0A0A0B;
+  --surface:        #111113;
+  --surface-2:      #18181B;
 
-  /* Surface */
-  --surface-page:   #f8f9ff;
-  --surface-card:   #ffffff;
-  --surface-muted:  #f1f5f9;
-  --surface-border: #e2e8f0;
+  /* ── Borders ── */
+  --border:         #27272A;
+  --border-strong:  #3F3F46;
 
-  /* Text */
-  --text-primary:   #0f172a;
-  --text-secondary: #475569;
-  --text-muted:     #94a3b8;
+  /* ── Text ── */
+  --foreground:     #FAFAFA;
+  --foreground-2:   #A1A1AA;
+  --muted:          #8B8B94;
 
-  /* Selection */
-  --selection-bg:   #c7d2fe;
-  --selection-text: #312e81;
-}
+  /* ── Brand Amber (actions, focus, logo — NEVER severity) ── */
+  --primary:            #F59E0B;
+  --primary-hover:      #FBBF24;
+  --primary-press:      #D97706;
+  --primary-foreground: #0A0A0B;   /* always black text on amber */
+  --primary-tint:       rgba(245, 158, 11, 0.10);
+  --primary-border:     rgba(245, 158, 11, 0.30);
+  --ring:               #FBBF24;
 
-/* ─── Indigo Ink: Dark Mode Tokens ──────────────────────────────────────────── */
-.dark {
-  --brand-50:  #1e1b4b;
-  --brand-100: #2e2a6e;
-  --brand-200: #3730a3;
-  --brand-300: #4338ca;
+  /* ── Severity (badges, card borders, highlights ONLY) ── */
+  --sev-low:         #34D399;
+  --sev-low-tint:    rgba(52,  211, 153, 0.10);
+  --sev-med:         #FB923C;
+  --sev-med-tint:    rgba(251, 146, 60,  0.10);
+  --sev-high:        #F87171;
+  --sev-high-tint:   rgba(248, 113, 113, 0.10);
+  --sev-severe:      #DC2626;
+  --sev-severe-fg:   #FFFFFF;
 
-  --surface-page:   #0f0f1a;
-  --surface-card:   #161625;
-  --surface-muted:  #1e1e30;
-  --surface-border: #2d2d45;
-
-  --text-primary:   #e2e8f0;
-  --text-secondary: #94a3b8;
-  --text-muted:     #64748b;
-
-  --selection-bg:   #312e81;
-  --selection-text: #c7d2fe;
+  /* ── Misc ── */
+  --radius-card:  1rem;   /* 16px = rounded-2xl */
+  --radius-btn:   0.75rem; /* 12px = rounded-xl */
 }
 
 /* ─── Base ──────────────────────────────────────────────────────────────────── */
-body {
-  font-family: var(--font-primary);
-  background-color: var(--surface-page);
-  color: var(--text-primary);
-  transition: background-color 0.3s ease, color 0.3s ease;
+html {
+  color-scheme: dark;
+  scroll-behavior: smooth;
 }
 
+body {
+  font-family: var(--font-primary);
+  background-color: var(--background);
+  color: var(--foreground);
+  font-size: 16px;
+  line-height: 1.6;
+  /* Ambient amber glow at the top of the page */
+  background-image: radial-gradient(60% 40% at 50% 0%, rgba(245, 158, 11, 0.10), transparent);
+  background-attachment: fixed;
+  min-height: 100svh;
+}
+
+/* ─── Text selection ────────────────────────────────────────────────────────── */
 ::selection {
-  background-color: var(--selection-bg);
-  color: var(--selection-text);
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+}
+
+/* ─── Scrollbar (Webkit + Firefox) ─────────────────────────────────────────── */
+* {
+  scrollbar-color: #3F3F46 #0A0A0B;
+  scrollbar-width: thin;
+}
+::-webkit-scrollbar        { width: 6px; height: 6px; }
+::-webkit-scrollbar-track  { background: #0A0A0B; }
+::-webkit-scrollbar-thumb  { background: #3F3F46; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #52525B; }
+
+/* ─── Focus ring ────────────────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-btn);
+}
+
+/* ─── Reduced motion ────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ─── Smooth micro-transitions (layout-safe properties only) ────────────────── */
+*, *::before, *::after {
+  transition-property: background-color, border-color, color, opacity, box-shadow;
+  transition-timing-function: ease;
+  transition-duration: 150ms;
+}
+
+/* ─── Typography helpers ────────────────────────────────────────────────────── */
+h1 {
+  font-size: clamp(2rem, 5vw, 3.25rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+  color: var(--foreground);
 }
 
 /* ─── Language font overrides ───────────────────────────────────────────────── */
 .lang-hi { font-family: var(--font-noto-devanagari), var(--font-primary); }
-.lang-ta { font-family: var(--font-noto-tamil), var(--font-primary); }
+.lang-ta { font-family: var(--font-noto-tamil),      var(--font-primary); }
+.lang-te { font-family: var(--font-noto-telugu),     var(--font-primary); }
+.lang-kn { font-family: var(--font-noto-kannada),    var(--font-primary); }
+.lang-ml { font-family: var(--font-noto-malayalam),  var(--font-primary); }
+.lang-bn { font-family: var(--font-noto-bengali),    var(--font-primary); }
 
-/* ─── Dark mode overrides ───────────────────────────────────────────────────── */
-.dark .bg-white          { background-color: var(--surface-card) !important; }
-.dark .bg-slate-50       { background-color: var(--surface-muted) !important; }
-.dark .bg-slate-100      { background-color: var(--surface-muted) !important; }
-.dark .border-slate-100  { border-color: var(--surface-border) !important; }
-.dark .border-slate-200  { border-color: var(--surface-border) !important; }
-.dark .text-slate-900    { color: var(--text-primary) !important; }
-.dark .text-slate-800    { color: var(--text-primary) !important; }
-.dark .text-slate-700    { color: var(--text-secondary) !important; }
-.dark .text-slate-600    { color: var(--text-secondary) !important; }
-.dark .text-slate-500    { color: var(--text-muted) !important; }
-.dark .text-slate-400    { color: var(--text-muted) !important; }
+/* ─── Skip to content ───────────────────────────────────────────────────────── */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+.skip-link:focus {
+  left: 0.5rem;
+  top: 0.5rem;
+  width: auto;
+  height: auto;
+  padding: 0.5rem 1rem;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-weight: 700;
+  border-radius: var(--radius-btn);
+  z-index: 9999;
+  text-decoration: none;
+}
 
-/* ─── Smooth color transitions ──────────────────────────────────────────────── */
-*, *::before, *::after {
-  transition-property: background-color, border-color, color, fill, stroke;
-  transition-timing-function: ease;
-  transition-duration: 200ms;
+/* ─── Skeleton shimmer ──────────────────────────────────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position:  400px 0; }
+}
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--surface-2) 0%,
+    var(--border) 50%,
+    var(--surface-2) 100%
+  );
+  background-size: 800px 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+  border-radius: 0.5rem;
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton { animation: none; background: var(--surface-2); }
+}
+
+/* ─── Clause pulse (Document tab active clause) ─────────────────────────────── */
+@keyframes clause-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.5); }
+  60%  { box-shadow: 0 0 0 6px rgba(245, 158, 11, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+}
+.clause-active-pulse {
+  animation: clause-pulse 0.8s ease-out;
 }
 
 /* ─── Print styles ──────────────────────────────────────────────────────────── */
 @media print {
-  header, nav, button, .no-print { display: none !important; }
-  body { background: #ffffff !important; color: #0f172a !important; }
-  .shadow-sm, .shadow-md, .shadow-xl, .shadow-2xl { box-shadow: none !important; }
+  header, nav, .no-print { display: none !important; }
+  html, body { background: #ffffff !important; color: #0f172a !important; }
   * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
 }

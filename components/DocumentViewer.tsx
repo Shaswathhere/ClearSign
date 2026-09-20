@@ -4,6 +4,7 @@ import React, { useEffect, useRef } from "react";
 import { Clause } from "@/lib/segment";
 import { Severity } from "@/lib/schema";
 import { z } from "zod";
+import { ShieldAlert, AlertTriangle, Info } from "lucide-react";
 
 type SeverityType = z.infer<typeof Severity>;
 
@@ -12,6 +13,37 @@ interface DocumentViewerProps {
   activeClauseId?: string | null;
   clauseSeverities?: Record<string, SeverityType>;
   onSelectClause?: (clauseId: string) => void;
+}
+
+function getSeverityStyle(severity: SeverityType | undefined) {
+  switch (severity) {
+    case "high":
+      return {
+        bg: "var(--sev-high-tint)",
+        border: "var(--sev-high)",
+        color: "var(--sev-high)",
+        label: "High risk",
+        Icon: ShieldAlert,
+      };
+    case "medium":
+      return {
+        bg: "var(--sev-med-tint)",
+        border: "var(--sev-med)",
+        color: "var(--sev-med)",
+        label: "Medium risk",
+        Icon: AlertTriangle,
+      };
+    case "low":
+      return {
+        bg: "var(--sev-low-tint)",
+        border: "var(--sev-low)",
+        color: "var(--sev-low)",
+        label: "Low risk",
+        Icon: Info,
+      };
+    default:
+      return null;
+  }
 }
 
 export default function DocumentViewer({
@@ -28,83 +60,114 @@ export default function DocumentViewer({
         behavior: "smooth",
         block: "center",
       });
+      // Trigger pulse
+      const el = clauseRefs.current[activeClauseId];
+      if (el) {
+        el.classList.remove("clause-active-pulse");
+        void el.offsetWidth; // reflow
+        el.classList.add("clause-active-pulse");
+      }
     }
   }, [activeClauseId]);
 
   if (!clauses || clauses.length === 0) {
     return (
-      <div className="p-8 text-center text-slate-500 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+      <div
+        className="p-8 text-center rounded-2xl"
+        style={{
+          color: "var(--muted)",
+          backgroundColor: "var(--surface)",
+          border: "1px dashed var(--border-strong)",
+        }}
+      >
         No document text available.
       </div>
     );
   }
 
   return (
-    <div className="space-y-3 font-mono text-sm leading-relaxed max-h-[70vh] overflow-y-auto pr-2 rounded-xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm">
-      <div className="flex items-center justify-between pb-3 border-b border-slate-100 text-xs font-sans text-slate-500">
-        <span className="font-semibold uppercase tracking-wider text-slate-600">
-          Source Document ({clauses.length} clauses)
+    <div
+      className="font-mono text-sm leading-relaxed max-h-[70vh] overflow-y-auto rounded-2xl border p-4 sm:p-6"
+      style={{ backgroundColor: "var(--surface)", borderColor: "var(--border)" }}
+    >
+      {/* Legend */}
+      <div
+        className="flex items-center justify-between pb-3 mb-3 border-b text-xs font-sans"
+        style={{ borderColor: "var(--border)" }}
+      >
+        <span
+          className="font-semibold uppercase tracking-wider"
+          style={{ color: "var(--foreground-2)" }}
+        >
+          Source document ({clauses.length} clauses)
         </span>
-        <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1 text-[11px] text-rose-700">
-            <span className="h-2 w-2 rounded-full bg-rose-500" /> High
+        <div className="flex items-center gap-3">
+          <span className="inline-flex items-center gap-1 text-[11px]" style={{ color: "var(--sev-high)" }}>
+            <ShieldAlert className="h-3 w-3" strokeWidth={1.75} /> High
           </span>
-          <span className="inline-flex items-center gap-1 text-[11px] text-amber-700">
-            <span className="h-2 w-2 rounded-full bg-amber-500" /> Medium
+          <span className="inline-flex items-center gap-1 text-[11px]" style={{ color: "var(--sev-med)" }}>
+            <AlertTriangle className="h-3 w-3" strokeWidth={1.75} /> Medium
           </span>
-          <span className="inline-flex items-center gap-1 text-[11px] text-emerald-700">
-            <span className="h-2 w-2 rounded-full bg-emerald-500" /> Low
+          <span className="inline-flex items-center gap-1 text-[11px]" style={{ color: "var(--sev-low)" }}>
+            <Info className="h-3 w-3" strokeWidth={1.75} /> Low
           </span>
         </div>
       </div>
 
-      <div className="divide-y divide-slate-100">
+      <div className="divide-y" style={{ borderColor: "var(--border)" }}>
         {clauses.map((clause) => {
-          const severity = clauseSeverities[clause.id];
+          const severity = clauseSeverities[clause.id] as SeverityType | undefined;
+          const sevStyle = getSeverityStyle(severity);
           const isActive = activeClauseId === clause.id;
-
-          let highlightClasses = "bg-transparent text-slate-800 border-l-2 border-transparent";
-          if (severity === "high") {
-            highlightClasses = "bg-rose-50/80 text-rose-950 border-l-4 border-rose-500 font-medium";
-          } else if (severity === "medium") {
-            highlightClasses = "bg-amber-50/80 text-amber-950 border-l-4 border-amber-500";
-          } else if (severity === "low") {
-            highlightClasses = "bg-emerald-50/70 text-emerald-950 border-l-4 border-emerald-500";
-          }
-
-          if (isActive) {
-            highlightClasses += " ring-2 ring-indigo-600 ring-offset-1 rounded-md shadow-sm";
-          }
 
           return (
             <div
               key={clause.id}
-              ref={(el) => {
-                clauseRefs.current[clause.id] = el;
-              }}
+              ref={(el) => { clauseRefs.current[clause.id] = el; }}
               id={`clause-${clause.id}`}
               onClick={() => onSelectClause?.(clause.id)}
-              className={`p-3 transition-all duration-150 cursor-pointer hover:bg-slate-50/80 ${highlightClasses}`}
+              className="p-3 transition-all duration-150 cursor-pointer rounded-lg"
+              style={{
+                backgroundColor: isActive
+                  ? "var(--primary-tint)"
+                  : sevStyle
+                  ? sevStyle.bg
+                  : "transparent",
+                borderLeft: sevStyle
+                  ? `3px solid ${sevStyle.border}`
+                  : "3px solid transparent",
+                outline: isActive ? "2px solid var(--primary)" : "none",
+                outlineOffset: "1px",
+              }}
             >
               <div className="flex items-center justify-between gap-2 mb-1.5 font-sans">
-                <span className="inline-flex items-center rounded bg-slate-200/80 px-1.5 py-0.5 text-[10px] font-bold text-slate-700 tracking-wider">
+                <span
+                  className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-bold tracking-wider font-mono"
+                  style={{
+                    backgroundColor: "var(--surface-2)",
+                    color: "var(--muted)",
+                    border: "1px solid var(--border-strong)",
+                  }}
+                >
                   [{clause.id}]
                 </span>
-                {severity && (
+                {sevStyle && (
                   <span
-                    className={`text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded ${
-                      severity === "high"
-                        ? "bg-rose-100 text-rose-800"
-                        : severity === "medium"
-                        ? "bg-amber-100 text-amber-800"
-                        : "bg-emerald-100 text-emerald-800"
-                    }`}
+                    className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded"
+                    style={{
+                      backgroundColor: sevStyle.bg,
+                      color: sevStyle.color,
+                    }}
                   >
-                    {severity} Risk
+                    <sevStyle.Icon className="h-3 w-3" strokeWidth={1.75} />
+                    {sevStyle.label}
                   </span>
                 )}
               </div>
-              <p className="whitespace-pre-wrap break-words leading-relaxed">
+              <p
+                className="whitespace-pre-wrap break-words leading-relaxed text-xs"
+                style={{ color: "var(--foreground-2)" }}
+              >
                 {clause.text.trim()}
               </p>
             </div>
