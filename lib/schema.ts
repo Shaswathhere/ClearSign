@@ -35,7 +35,7 @@ export const Trap = z.object({
   severity: Severity,
   why: z.string().transform((w) => truncateWordSafely(w, 280)),              // plain language, Grade 6
   action: z.string().transform((a) => truncateWordSafely(a, 200)),           // what to do
-  question: z.string().transform((q) => truncateWordSafely(q, 200)).optional(),
+  question: z.string().nullable().transform((q) => q ? truncateWordSafely(q, 200) : null).optional(),
 });
 
 export const RelativeRule = z.object({
