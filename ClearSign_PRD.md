@@ -355,7 +355,7 @@ flowchart TB
 | Framework | **Next.js (App Router) + TypeScript** | One repo for UI and API routes; first-class Vercel deploys | Vite + Express |
 | Styling | **Tailwind CSS + shadcn/ui + lucide-react** | Fast, accessible components | Plain CSS modules |
 | Validation | **Zod** | Runtime schema validation for LLM output and API inputs | Valibot |
-| LLM | **Provider-agnostic wrapper** (`lib/llm.ts`) supporting a vision-capable, JSON-schema-capable model. Use whichever provider key you have; a free tier is fine for a hackathon (check current quotas) | Avoids lock-in; enables fallback | Second provider as backup |
+| LLM | **Groq SDK (`groq-sdk`) provider-agnostic wrapper** (`lib/llm.ts`) using high-speed models (`llama-3.3-70b-versatile`, `llama-3.2-11b-vision-preview` / `llama-3.1-8b-instant`) with JSON mode | Ultra-fast inference, high rate limits, structured JSON output | Secondary provider / rule-only fallback |
 | PDF text | **pdfjs-dist** (client) | Privacy, no upload | LLM vision path |
 | Image prep | **browser-image-compression** | Shrinks phone photos before upload | Canvas resize |
 | Fuzzy match | **fastest-levenshtein** (or hand-written token Dice) | Quote verification fallback | Exact match only |

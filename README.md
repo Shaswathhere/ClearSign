@@ -34,7 +34,7 @@ Full design, architecture, schemas, and specifications are documented in [ClearS
 - **Framework:** Next.js (App Router) with TypeScript (strict mode)
 - **Styling & UI:** Tailwind CSS, shadcn/ui design tokens, Lucide React icons
 - **Validation:** Zod schemas
-- **LLM Engine:** Server-side provider-agnostic wrapper (`lib/llm.ts`) powered by Google Gemini (`@google/genai`)
+- **LLM Engine:** Server-side provider-agnostic wrapper (`lib/llm.ts`) powered by Groq (`groq-sdk`) using Llama 3.3 70B & Llama 3.2 Vision for ultra-fast, structured JSON analysis
 - **Document Processing:** Client-side `pdfjs-dist` (zero document upload) and `browser-image-compression`
 - **Utility Engines:** `fastest-levenshtein`, `date-fns`, `ics`
 - **Testing:** Vitest
