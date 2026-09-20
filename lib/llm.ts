@@ -14,7 +14,7 @@ function getGroqClient(): Groq {
   return new Groq({ apiKey });
 }
 
-export const DEFAULT_MODEL = process.env.LLM_MODEL || "llama-3.3-70b-versatile";
+export const DEFAULT_MODEL = process.env.LLM_MODEL || "openai/gpt-oss-20b";
 export const VISION_MODEL = process.env.LLM_MODEL_VISION || "llama-3.2-11b-vision-preview";
 
 /**
@@ -81,6 +81,7 @@ export async function callLLMJson<T>(
       messages,
       response_format: { type: "json_object" },
       temperature: 0.1,
+      max_tokens: 4096,
     });
 
     const rawContent = completion.choices[0]?.message?.content?.trim() || "{}";

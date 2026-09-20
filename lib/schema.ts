@@ -21,12 +21,12 @@ export const Category = z.enum([
 
 export const Trap = z.object({
   clauseId: z.string(),                  // "C7"
-  quote: z.string().min(20).max(400),    // must exist in source
+  quote: z.string().min(20).transform((q) => (q.length > 400 ? q.slice(0, 400) : q)),    // must exist in source
   category: Category,
   severity: Severity,
-  why: z.string().max(280),              // plain language, Grade 6
-  action: z.string().max(200),           // what to do
-  question: z.string().max(200).optional(),
+  why: z.string().transform((w) => (w.length > 280 ? w.slice(0, 280) : w)),              // plain language, Grade 6
+  action: z.string().transform((a) => (a.length > 200 ? a.slice(0, 200) : a)),           // what to do
+  question: z.string().transform((q) => (q.length > 200 ? q.slice(0, 200) : q)).optional(),
 });
 
 export const RelativeRule = z.object({
@@ -69,18 +69,18 @@ export const Rental = z.object({
 });
 
 export const Analysis = z.object({
-  docType: z.enum(["rental", "loan", "subscription", "insurance", "employment", "terms_of_service", "other"]),
+  docType: z.enum(["rental", "loan", "subscription", "insurance", "employment", "terms_of_service", "other"]).default("other"),
   currency: z.string().default("INR"),
-  summary: z.array(z.string().max(160)).max(5),
-  traps: z.array(Trap).max(15),
-  deadlines: z.array(Deadline).max(10),
+  summary: z.array(z.string().transform((s) => (s.length > 160 ? s.slice(0, 160) : s))).transform((a) => a.slice(0, 5)).default([]),
+  traps: z.array(Trap).transform((a) => a.slice(0, 15)).default([]),
+  deadlines: z.array(Deadline).transform((a) => a.slice(0, 10)).default([]),
   terms: z.object({
-    loan: Loan.nullable(),
-    subscription: Subscription.nullable(),
-    rental: Rental.nullable(),
-  }),
-  questions: z.array(z.string().max(200)).max(7),
-  missing: z.array(z.object({ item: z.string(), why: z.string() })).max(4), // P1
+    loan: Loan.nullable().default(null),
+    subscription: Subscription.nullable().default(null),
+    rental: Rental.nullable().default(null),
+  }).default({ loan: null, subscription: null, rental: null }),
+  questions: z.array(z.string().transform((q) => (q.length > 200 ? q.slice(0, 200) : q))).transform((a) => a.slice(0, 7)).default([]),
+  missing: z.array(z.object({ item: z.string(), why: z.string() })).transform((a) => a.slice(0, 4)).default([]), // P1
 });
 
 export type Analysis = z.infer<typeof Analysis>;
