@@ -16,15 +16,15 @@ const SUPPORTED_LANGS = ["hi", "ta", "te", "kn", "ml", "bn", "mr"] as const;
 const TranslateRequest = z.object({
   target: z.enum(SUPPORTED_LANGS),
   payload: z.object({
-    summary: z.array(z.string()).max(5),
+    summary: z.array(z.string()).max(20),
     traps: z.array(z.object({
-      why: z.string().max(400),
-      action: z.string().max(300),
-      question: z.string().max(300).optional(),
-    })).max(15),
-    questions: z.array(z.string().max(300)).max(7),
-    deadlines: z.array(z.object({ label: z.string().max(150) })).max(10),
-    missing: z.array(z.object({ item: z.string().max(200), why: z.string().max(300) })).max(4),
+      why: z.string(),
+      action: z.string(),
+      question: z.string().nullable().optional(),
+    })).max(50),
+    questions: z.array(z.string()).max(20),
+    deadlines: z.array(z.object({ label: z.string() })).max(30),
+    missing: z.array(z.object({ item: z.string(), why: z.string() })).max(20),
   }),
 });
 
