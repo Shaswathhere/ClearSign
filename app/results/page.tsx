@@ -9,7 +9,26 @@ import TrapCard from "@/components/TrapCard";
 import DocumentViewer from "@/components/DocumentViewer";
 import ProgressSteps, { PipelineStage } from "@/components/ProgressSteps";
 import QuestionsToAsk from "@/components/QuestionsToAsk";
-import { ArrowLeft, FileText, AlertTriangle, Calendar, MessageSquareQuote, ShieldAlert } from "lucide-react";
+import DatesCostsPanel from "@/components/DatesCostsPanel";
+import AskPanel from "@/components/AskPanel";
+import LanguageSwitch, { SupportedLocale } from "@/components/LanguageSwitch";
+import ReadAloud from "@/components/ReadAloud";
+import DraftEmailModal from "@/components/DraftEmailModal";
+import {
+  ArrowLeft, FileText, AlertTriangle, Calendar, MessageSquareQuote, ShieldAlert, Mail, Printer,
+} from "lucide-react";
+
+// ─── Translation types ─────────────────────────────────────────────────────────
+
+interface TranslatedPayload {
+  summary: string[];
+  traps: { why: string; action: string; question?: string }[];
+  questions: string[];
+  deadlines: { label: string }[];
+  missing: { item: string; why: string }[];
+}
+
+// ─── Main Results Component ────────────────────────────────────────────────────
 
 function ResultsContent() {
   const [stage, setStage] = useState<PipelineStage>(1);
@@ -20,6 +39,12 @@ function ResultsContent() {
   const [activeTab, setActiveTab] = useState<"risks" | "dates_costs" | "ask" | "document">("risks");
   const [selectedClauseId, setSelectedClauseId] = useState<string | null>(null);
 
+  // Language & translation state
+  const [locale, setLocale] = useState<SupportedLocale>("en");
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [translationCache, setTranslationCache] = useState<Partial<Record<SupportedLocale, TranslatedPayload>>>({});
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
+
   const runAnalysis = useCallback(async (text: string) => {
     setIsLoading(true);
     setError(null);
@@ -28,7 +53,6 @@ function ResultsContent() {
     const segmented = segmentDocument(text);
     setClauses(segmented);
 
-    // Staged progress timers to mirror actual pipeline
     const timer1 = setTimeout(() => setStage(2), 600);
     const timer2 = setTimeout(() => setStage(3), 1400);
 
@@ -47,7 +71,6 @@ function ResultsContent() {
       }
 
       setResult(data);
-      // Store in session storage for dates and calculators
       try {
         sessionStorage.setItem("clearsign_analysis", JSON.stringify(data));
       } catch {
@@ -100,11 +123,73 @@ function ResultsContent() {
     };
   }, [runAnalysis]);
 
-  // Severity map for document viewer highlights
+  // ─── Translation ────────────────────────────────────────────────────────────
+
+  const handleLocaleChange = useCallback(async (newLocale: SupportedLocale) => {
+    setLocale(newLocale);
+    if (newLocale === "en" || !result) return;
+
+    // Use cache if available
+    if (translationCache[newLocale]) return;
+
+    setIsTranslating(true);
+    try {
+      const payload = {
+        summary: result.summary,
+        traps: result.traps.map((t) => ({ why: t.why, action: t.action, question: t.question })),
+        questions: result.questions,
+        deadlines: result.deadlines.map((d) => ({ label: d.label })),
+        missing: result.missing,
+      };
+
+      const res = await fetch("/api/translate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ target: newLocale, payload }),
+      });
+
+      if (res.ok) {
+        const translated: TranslatedPayload = await res.json();
+        setTranslationCache((prev) => ({ ...prev, [newLocale]: translated }));
+      }
+    } catch {
+      // Silently fail — fall back to English
+    } finally {
+      setIsTranslating(false);
+    }
+  }, [result, translationCache]);
+
+  // ─── Derived display data (translated if available) ─────────────────────────
+
+  const displayData = useMemo(() => {
+    if (!result) return null;
+    const t = locale !== "en" ? translationCache[locale] : null;
+
+    return {
+      summary: t?.summary ?? result.summary,
+      traps: result.traps.map((trap, i) => ({
+        ...trap,
+        why: t?.traps[i]?.why ?? trap.why,
+        action: t?.traps[i]?.action ?? trap.action,
+        question: t?.traps[i]?.question ?? trap.question,
+      })),
+      questions: t?.questions ?? result.questions,
+      deadlines: result.deadlines.map((d, i) => ({
+        ...d,
+        label: t?.deadlines[i]?.label ?? d.label,
+      })),
+      missing: result.missing.map((m, i) => ({
+        item: t?.missing[i]?.item ?? m.item,
+        why: t?.missing[i]?.why ?? m.why,
+      })),
+    };
+  }, [result, locale, translationCache]);
+
+  // ─── Clause severity map ────────────────────────────────────────────────────
+
   const clauseSeverities = useMemo(() => {
     const map: Record<string, "high" | "medium" | "low"> = {};
     if (!result?.traps) return map;
-
     for (const trap of result.traps) {
       const current = map[trap.clauseId];
       if (trap.severity === "high") {
@@ -118,18 +203,18 @@ function ResultsContent() {
     return map;
   }, [result]);
 
-  // Traps sorted by severity: high first, then medium, then low
   const sortedTraps = useMemo(() => {
-    if (!result?.traps) return [];
+    if (!displayData?.traps) return [];
     const rank: Record<string, number> = { high: 3, medium: 2, low: 1 };
-    return [...result.traps].sort((a, b) => rank[b.severity] - rank[a.severity]);
-  }, [result]);
+    return [...displayData.traps].sort((a, b) => rank[b.severity] - rank[a.severity]);
+  }, [displayData]);
 
-  // Jump from TrapCard to Document Tab
-  const handleShowInDocument = (clauseId: string) => {
+  const handleShowInDocument = useCallback((clauseId: string) => {
     setSelectedClauseId(clauseId);
     setActiveTab("document");
-  };
+  }, []);
+
+  // ─── Render: loading ────────────────────────────────────────────────────────
 
   if (isLoading) {
     return (
@@ -138,6 +223,8 @@ function ResultsContent() {
       </div>
     );
   }
+
+  // ─── Render: error ──────────────────────────────────────────────────────────
 
   if (error) {
     return (
@@ -159,95 +246,109 @@ function ResultsContent() {
     );
   }
 
-  if (!result) return null;
+  if (!result || !displayData) return null;
+
+  // ─── Render: results ────────────────────────────────────────────────────────
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto pb-12">
-      {/* Top Bar with back link */}
-      <div className="flex items-center justify-between gap-4">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-teal-700 transition-colors py-2"
-        >
-          <ArrowLeft className="h-4 w-4" /> Analyze another contract
-        </Link>
-        <span className="text-xs font-semibold text-slate-500">
-          {sortedTraps.length} verified findings
-        </span>
+      {/* Top bar */}
+      <div className="flex items-center justify-between gap-4 flex-wrap no-print">
+        <div className="flex items-center gap-4">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-teal-700 transition-colors py-2"
+          >
+            <ArrowLeft className="h-4 w-4" /> Analyze another contract
+          </Link>
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-teal-700 transition-colors py-2 cursor-pointer"
+            title="Print or Save as PDF"
+          >
+            <Printer className="h-3.5 w-3.5 text-slate-500" />
+            Print / PDF
+          </button>
+        </div>
+        <div className="flex items-center gap-3 flex-wrap">
+          <ReadAloud segments={displayData.summary} locale={locale} />
+          <LanguageSwitch
+            current={locale}
+            onChange={handleLocaleChange}
+            isTranslating={isTranslating}
+          />
+        </div>
       </div>
 
-      {/* Primary Verdict Card */}
+      {/* Verdict card */}
       <VerdictCard
         score={result.score}
         band={result.band}
-        summary={result.summary}
+        summary={displayData.summary}
         docType={result.docType}
         removedUnverified={result.removedUnverified}
         clauseCount={clauses.length}
       />
 
-      {/* 4 Main Tabs */}
-      <div className="flex border-b border-slate-200 gap-1 sm:gap-2 overflow-x-auto pb-1">
-        <button
-          type="button"
-          onClick={() => setActiveTab("risks")}
-          className={`flex items-center gap-2 px-4 py-3 rounded-xl text-xs font-bold transition-all shrink-0 min-h-[48px] ${
-            activeTab === "risks"
-              ? "bg-teal-700 text-white shadow-xs"
-              : "text-slate-600 hover:bg-slate-100"
-          }`}
-        >
-          <ShieldAlert className="h-4 w-4" />
-          Risks ({sortedTraps.length})
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab("dates_costs")}
-          className={`flex items-center gap-2 px-4 py-3 rounded-xl text-xs font-bold transition-all shrink-0 min-h-[48px] ${
-            activeTab === "dates_costs"
-              ? "bg-teal-700 text-white shadow-xs"
-              : "text-slate-600 hover:bg-slate-100"
-          }`}
-        >
-          <Calendar className="h-4 w-4" />
-          Dates & Costs
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab("ask")}
-          className={`flex items-center gap-2 px-4 py-3 rounded-xl text-xs font-bold transition-all shrink-0 min-h-[48px] ${
-            activeTab === "ask"
-              ? "bg-teal-700 text-white shadow-xs"
-              : "text-slate-600 hover:bg-slate-100"
-          }`}
-        >
-          <MessageSquareQuote className="h-4 w-4" />
-          Ask Document
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab("document")}
-          className={`flex items-center gap-2 px-4 py-3 rounded-xl text-xs font-bold transition-all shrink-0 min-h-[48px] ${
-            activeTab === "document"
-              ? "bg-teal-700 text-white shadow-xs"
-              : "text-slate-600 hover:bg-slate-100"
-          }`}
-        >
-          <FileText className="h-4 w-4" />
-          Document ({clauses.length})
-        </button>
+      {/* Tabs */}
+      <div
+        className="flex border-b border-slate-200 gap-1 sm:gap-2 overflow-x-auto pb-1"
+        role="tablist"
+        aria-label="Results tabs"
+      >
+        {(
+          [
+            { id: "risks", icon: <ShieldAlert className="h-4 w-4" />, label: `Risks (${sortedTraps.length})` },
+            { id: "dates_costs", icon: <Calendar className="h-4 w-4" />, label: "Dates & Costs" },
+            { id: "ask", icon: <MessageSquareQuote className="h-4 w-4" />, label: "Ask Document" },
+            { id: "document", icon: <FileText className="h-4 w-4" />, label: `Document (${clauses.length})` },
+          ] as const
+        ).map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            role="tab"
+            id={`tab-${tab.id}`}
+            aria-selected={activeTab === tab.id}
+            aria-controls={`panel-${tab.id}`}
+            onClick={() => setActiveTab(tab.id)}
+            className={`flex items-center gap-2 px-4 py-3 rounded-xl text-xs font-bold transition-all shrink-0 min-h-[48px] ${
+              activeTab === tab.id
+                ? "bg-teal-700 text-white shadow-xs"
+                : "text-slate-600 hover:bg-slate-100"
+            }`}
+          >
+            {tab.icon}
+            {tab.label}
+          </button>
+        ))}
       </div>
 
-      {/* Tab 1: Risks Tab */}
+      {/* Tab: Risks */}
       {activeTab === "risks" && (
-        <div className="space-y-6">
+        <div
+          id="panel-risks"
+          role="tabpanel"
+          aria-labelledby="tab-risks"
+          className="space-y-6"
+        >
           <div className="space-y-3">
-            <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
-              Identified Contract Traps ({sortedTraps.length})
-            </h3>
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
+                Identified Contract Traps ({sortedTraps.length})
+              </h3>
+              {sortedTraps.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setEmailModalOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 text-xs font-semibold shadow-xs transition-colors min-h-[36px]"
+                >
+                  <Mail className="h-3.5 w-3.5 text-teal-700" />
+                  Draft Negotiation Email
+                </button>
+              )}
+            </div>
             {sortedTraps.length === 0 ? (
               <div className="p-8 text-center bg-white rounded-2xl border border-slate-200 text-xs text-slate-500">
                 No high-risk terms identified by rules or AI.
@@ -264,43 +365,61 @@ function ResultsContent() {
               </div>
             )}
           </div>
+          <QuestionsToAsk questions={displayData.questions} />
 
-          {/* Questions to Ask */}
-          <QuestionsToAsk questions={result.questions} />
+          {/* Missing protections (P1) */}
+          {displayData.missing.length > 0 && (
+            <div className="space-y-2">
+              <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                Missing Protections
+              </h4>
+              <div className="space-y-2">
+                {displayData.missing.map((m, i) => (
+                  <div key={i} className="bg-amber-50 border border-amber-200 rounded-xl p-3 space-y-1">
+                    <p className="text-xs font-semibold text-amber-800">⚠ {m.item}</p>
+                    <p className="text-[11px] text-amber-700">{m.why}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
-      {/* Tab 2: Dates & Costs Tab (Pre-wired for Phase 4) */}
+      {/* Tab: Dates & Costs */}
       {activeTab === "dates_costs" && (
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 space-y-4 text-center">
-          <Calendar className="h-10 w-10 text-teal-700 mx-auto" />
-          <h3 className="text-base font-bold text-slate-900">Dates & Financial Calculator</h3>
-          <p className="text-xs text-slate-600 max-w-md mx-auto leading-relaxed">
-            Deterministic deadline resolution to .ics calendar files and loan/rental cost engine.
-          </p>
-          <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 text-xs text-slate-500 text-left max-w-md mx-auto space-y-2">
-            <p><strong>Extracted Deadlines:</strong> {result.deadlines.length}</p>
-            <p><strong>Loan Terms:</strong> {result.terms.loan ? `${result.terms.loan.annualRatePct}% annual rate` : "None"}</p>
-            <p><strong>Rental Terms:</strong> {result.terms.rental ? `₹${result.terms.rental.monthlyRent}/mo` : "None"}</p>
-            <p><strong>Subscription Terms:</strong> {result.terms.subscription ? `₹${result.terms.subscription.price}` : "None"}</p>
-          </div>
+        <div
+          id="panel-dates_costs"
+          role="tabpanel"
+          aria-labelledby="tab-dates_costs"
+        >
+          <DatesCostsPanel result={result} />
         </div>
       )}
 
-      {/* Tab 3: Ask Document Tab (Pre-wired for Phase 6) */}
+      {/* Tab: Ask Document */}
       {activeTab === "ask" && (
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 space-y-4 text-center">
-          <MessageSquareQuote className="h-10 w-10 text-teal-700 mx-auto" />
-          <h3 className="text-base font-bold text-slate-900">Ask this Document</h3>
-          <p className="text-xs text-slate-600 max-w-md mx-auto leading-relaxed">
-            Chat with this contract grounded strictly in the source clauses with verified [C#] citations.
-          </p>
+        <div
+          id="panel-ask"
+          role="tabpanel"
+          aria-labelledby="tab-ask"
+        >
+          <AskPanel
+            clauses={clauses}
+            result={result}
+            onShowInDocument={handleShowInDocument}
+          />
         </div>
       )}
 
-      {/* Tab 4: Source Document Viewer */}
+      {/* Tab: Document */}
       {activeTab === "document" && (
-        <div className="space-y-4">
+        <div
+          id="panel-document"
+          role="tabpanel"
+          aria-labelledby="tab-document"
+          className="space-y-4"
+        >
           <DocumentViewer
             clauses={clauses}
             activeClauseId={selectedClauseId}
@@ -309,6 +428,14 @@ function ResultsContent() {
           />
         </div>
       )}
+
+      {/* Draft Negotiation Email Modal */}
+      <DraftEmailModal
+        traps={sortedTraps}
+        docType={result.docType}
+        isOpen={emailModalOpen}
+        onClose={() => setEmailModalOpen(false)}
+      />
     </div>
   );
 }

@@ -17,3 +17,20 @@ body {
 .lang-ta {
   font-family: var(--font-noto-tamil), var(--font-inter);
 }
+
+@media print {
+  header, nav, button, .no-print {
+    display: none !important;
+  }
+  body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+  }
+  .shadow-sm, .shadow-md, .shadow-xl, .shadow-2xl {
+    box-shadow: none !important;
+  }
+  * {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}

@@ -3,23 +3,24 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import InputPanel from "@/components/InputPanel";
-import DocumentViewer from "@/components/DocumentViewer";
-import { segmentDocument, Clause } from "@/lib/segment";
-import { Shield, Sparkles, FileText, CheckCircle2 } from "lucide-react";
+import { segmentDocument } from "@/lib/segment";
+import { Shield, Sparkles, CheckCircle2, Loader2 } from "lucide-react";
+
+const SAMPLES = [
+  { key: "gym-membership", label: "🏋 Gym Membership", file: "/samples/gym-membership.txt" },
+  { key: "rental-agreement", label: "🏠 Rental Agreement", file: "/samples/rental-agreement.txt" },
+  { key: "personal-loan", label: "💳 Personal Loan", file: "/samples/personal-loan.txt" },
+];
 
 export default function Home() {
   const router = useRouter();
   const [analyzing, setAnalyzing] = useState(false);
-  const [clauses, setClauses] = useState<Clause[]>([]);
-  const [activeClauseId, setActiveClauseId] = useState<string | null>(null);
+  const [loadingSample, setLoadingSample] = useState<string | null>(null);
 
   const handleAnalyze = async (text: string) => {
     setAnalyzing(true);
-    // Segment clauses client-side
     const segmented = segmentDocument(text);
-    setClauses(segmented);
 
-    // Store in sessionStorage so results page can access it
     try {
       sessionStorage.setItem("clearsign_raw_text", text);
       sessionStorage.setItem("clearsign_clauses", JSON.stringify(segmented));
@@ -27,8 +28,26 @@ export default function Home() {
       // Ignore sessionStorage exceptions
     }
 
-    // Redirect to results flow
     router.push("/results?source=input");
+  };
+
+  const handleSample = async (sample: (typeof SAMPLES)[number]) => {
+    setLoadingSample(sample.key);
+    try {
+      const res = await fetch(sample.file);
+      if (!res.ok) throw new Error(`Failed to load ${sample.label}`);
+      const text = await res.text();
+      const segmented = segmentDocument(text);
+      try {
+        sessionStorage.setItem("clearsign_raw_text", text);
+        sessionStorage.setItem("clearsign_clauses", JSON.stringify(segmented));
+      } catch {
+        // Ignore
+      }
+      router.push("/results?source=sample");
+    } catch {
+      setLoadingSample(null);
+    }
   };
 
   return (
@@ -43,18 +62,50 @@ export default function Home() {
           Never agree to a contract you haven&apos;t fully understood.
         </h1>
         <p className="text-sm sm:text-base text-slate-600 max-w-xl mx-auto leading-relaxed">
-          ClearSign finds hidden traps, auto-renewals, and unfair penalties. Every finding is verified word-for-word against the source document.
+          ClearSign finds hidden traps, auto-renewals, and unfair penalties. Every finding is verified
+          word-for-word against the source document.
         </p>
       </div>
 
+      {/* Try a Sample chips */}
+      <div className="space-y-2">
+        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider text-center">
+          Try a sample contract
+        </p>
+        <div className="flex flex-wrap justify-center gap-2">
+          {SAMPLES.map((s) => (
+            <button
+              key={s.key}
+              id={`sample-btn-${s.key}`}
+              type="button"
+              onClick={() => handleSample(s)}
+              disabled={!!loadingSample || analyzing}
+              className="flex items-center gap-2 rounded-xl border border-teal-200 bg-white text-teal-700 text-xs font-semibold px-4 py-2.5 hover:bg-teal-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
+            >
+              {loadingSample === s.key ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : null}
+              {s.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Divider */}
+      <div className="flex items-center gap-3 text-xs text-slate-400">
+        <div className="flex-1 border-t border-slate-200" />
+        <span className="font-medium">or paste / upload your own</span>
+        <div className="flex-1 border-t border-slate-200" />
+      </div>
+
       {/* Input Component */}
-      <InputPanel onAnalyze={handleAnalyze} isLoading={analyzing} />
+      <InputPanel onAnalyze={handleAnalyze} isLoading={analyzing || !!loadingSample} />
 
       {/* Privacy Guarantee Card */}
       <div className="rounded-2xl bg-white border border-slate-200 p-5 shadow-2xs space-y-3">
         <div className="flex items-center gap-2 text-slate-900 font-bold text-sm">
           <Shield className="h-4 w-4 text-teal-700" />
-          <span>Our Privacy & Verification Guarantees</span>
+          <span>Our Privacy &amp; Verification Guarantees</span>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-600">
           <div className="flex items-start gap-2">
@@ -83,21 +134,6 @@ export default function Home() {
           </div>
         </div>
       </div>
-
-      {/* Preview if clauses exist */}
-      {clauses.length > 0 && (
-        <div className="space-y-3 pt-4">
-          <h2 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-            <FileText className="h-4 w-4 text-teal-700" />
-            Document Clauses Preview
-          </h2>
-          <DocumentViewer
-            clauses={clauses}
-            activeClauseId={activeClauseId}
-            onSelectClause={(id) => setActiveClauseId(id)}
-          />
-        </div>
-      )}
     </div>
   );
 }
