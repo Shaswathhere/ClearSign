@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { Copy, Check, ExternalLink, Loader2, X, Sparkles } from "lucide-react";
+import { Copy, Check, ExternalLink, Loader2, X, Mail } from "lucide-react";
 import type { VerifiedTrap } from "@/lib/schema";
 
 interface DraftEmailModalProps {
@@ -39,12 +39,8 @@ export default function DraftEmailModal({ traps, docType, isOpen, onClose }: Dra
           docType,
         }),
       });
-
       const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error?.message || "Failed to draft email");
-      }
-
+      if (!res.ok) throw new Error(data.error?.message || "Failed to draft email");
       setSubject(data.subject || "");
       setBody(data.body || "");
     } catch (err) {
@@ -54,121 +50,142 @@ export default function DraftEmailModal({ traps, docType, isOpen, onClose }: Dra
     }
   }, [traps, docType]);
 
-  // Fetch when opened or tone changed
   useEffect(() => {
     if (!isOpen) return;
     let active = true;
-    const timer = setTimeout(() => {
-      if (active) {
-        fetchEmail(tone);
-      }
-    }, 0);
-    return () => {
-      active = false;
-      clearTimeout(timer);
-    };
+    const timer = setTimeout(() => { if (active) fetchEmail(tone); }, 0);
+    return () => { active = false; clearTimeout(timer); };
   }, [isOpen, tone, fetchEmail]);
 
-  // Close on Escape
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && isOpen) onClose();
-    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape" && isOpen) onClose(); };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [isOpen, onClose]);
 
   const handleCopy = async () => {
     try {
-      const fullText = `Subject: ${subject}\n\n${body}`;
-      await navigator.clipboard.writeText(fullText);
+      await navigator.clipboard.writeText(`Subject: ${subject}\n\n${body}`);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // fallback
-    }
+    } catch { /* fallback */ }
   };
 
   const mailtoHref = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 
   if (!isOpen) return null;
 
+  const inputStyle = {
+    backgroundColor: "var(--surface-2)",
+    color: "var(--foreground)",
+    border: "1px solid var(--border)",
+    borderRadius: "0.75rem",
+    width: "100%",
+    padding: "0.5rem 0.75rem",
+    fontSize: "0.75rem",
+    outline: "none",
+  };
+
   return (
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Draft Negotiation Email"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
+      aria-label="Draft negotiation email"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ backgroundColor: "rgba(0,0,0,0.75)" }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-200 flex flex-col max-h-[90vh]">
+      <div
+        className="rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden flex flex-col max-h-[90vh] border"
+        style={{ backgroundColor: "var(--surface)", borderColor: "var(--border)" }}
+      >
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-slate-100">
+        <div
+          className="flex items-center justify-between p-5 border-b"
+          style={{ borderColor: "var(--border)" }}
+        >
           <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700">
-              <Sparkles className="h-5 w-5" />
+            <div
+              className="flex h-9 w-9 items-center justify-center rounded-xl"
+              style={{ backgroundColor: "var(--primary-tint)" }}
+            >
+              <Mail className="h-5 w-5" style={{ color: "var(--primary)" }} strokeWidth={1.75} />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-slate-900">Draft Negotiation Email</h2>
-              <p className="text-[11px] text-slate-500">Addresses top {Math.min(3, traps.length)} contract concerns</p>
+              <h2 className="text-sm font-bold" style={{ color: "var(--foreground)" }}>
+                Draft negotiation email
+              </h2>
+              <p className="text-[11px]" style={{ color: "var(--foreground-2)" }}>
+                Addresses top {Math.min(3, traps.length)} contract concerns
+              </p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close dialog"
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+            className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors"
+            style={{ color: "var(--muted)" }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = "var(--surface-2)"; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = "transparent"; }}
           >
-            <X className="h-4 w-4" />
+            <X className="h-4 w-4" strokeWidth={1.75} />
           </button>
         </div>
 
-        {/* Tone Selector */}
-        <div className="flex items-center justify-between px-5 py-3 bg-slate-50 border-b border-slate-100">
-          <span className="text-xs font-semibold text-slate-700">Tone:</span>
-          <div className="flex gap-1.5 bg-slate-200/60 p-1 rounded-xl">
-            <button
-              type="button"
-              onClick={() => setTone("polite")}
-              className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all ${
-                tone === "polite"
-                  ? "bg-white text-indigo-800 shadow-xs"
-                  : "text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              Polite & Inquiring
-            </button>
-            <button
-              type="button"
-              onClick={() => setTone("firm")}
-              className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all ${
-                tone === "firm"
-                  ? "bg-white text-indigo-800 shadow-xs"
-                  : "text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              Firm & Protective
-            </button>
+        {/* Tone selector */}
+        <div
+          className="flex items-center justify-between px-5 py-3 border-b"
+          style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-2)" }}
+        >
+          <span className="text-xs font-semibold" style={{ color: "var(--foreground-2)" }}>
+            Tone:
+          </span>
+          <div
+            className="flex gap-1 p-1 rounded-xl"
+            style={{ backgroundColor: "var(--background)" }}
+          >
+            {(["polite", "firm"] as const).map((t) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setTone(t)}
+                className="px-3 py-1 text-xs font-semibold rounded-lg transition-all"
+                style={{
+                  backgroundColor: tone === t ? "var(--primary)" : "transparent",
+                  color: tone === t ? "var(--primary-foreground)" : "var(--foreground-2)",
+                }}
+              >
+                {t === "polite" ? "Polite & Inquiring" : "Firm & Protective"}
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* Body content */}
+        {/* Body */}
         <div className="p-5 overflow-y-auto space-y-4 flex-1">
           {loading ? (
-            <div className="py-12 flex flex-col items-center justify-center gap-3 text-slate-500">
-              <Loader2 className="h-6 w-6 animate-spin text-indigo-600" />
-              <p className="text-xs">Drafting negotiation email with {tone} tone...</p>
+            <div className="py-12 flex flex-col items-center justify-center gap-3">
+              <Loader2 className="h-6 w-6 animate-spin" style={{ color: "var(--primary)" }} strokeWidth={1.75} />
+              <p className="text-xs" style={{ color: "var(--foreground-2)" }}>
+                Drafting with {tone} tone…
+              </p>
             </div>
           ) : error ? (
-            <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 space-y-2">
+            <div
+              className="p-4 rounded-xl text-xs space-y-2"
+              style={{
+                backgroundColor: "var(--sev-high-tint)",
+                border: "1px solid var(--sev-high)",
+                color: "var(--sev-high)",
+              }}
+            >
               <p className="font-semibold">Failed to generate email</p>
               <p>{error}</p>
               <button
                 type="button"
                 onClick={() => fetchEmail(tone)}
-                className="text-[11px] underline font-semibold text-rose-800"
+                className="text-[11px] underline font-semibold"
               >
                 Try again
               </button>
@@ -176,42 +193,56 @@ export default function DraftEmailModal({ traps, docType, isOpen, onClose }: Dra
           ) : (
             <div className="space-y-3 text-xs">
               <div>
-                <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
+                <label
+                  className="block text-[11px] font-bold uppercase tracking-wider mb-1"
+                  style={{ color: "var(--muted)" }}
+                >
                   Subject
                 </label>
                 <input
                   type="text"
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-xl font-medium text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 text-xs"
+                  style={inputStyle}
+                  onFocus={(e) => { e.target.style.borderColor = "var(--ring)"; }}
+                  onBlur={(e) => { e.target.style.borderColor = "var(--border)"; }}
                 />
               </div>
-
               <div>
-                <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
-                  Email Body
+                <label
+                  className="block text-[11px] font-bold uppercase tracking-wider mb-1"
+                  style={{ color: "var(--muted)" }}
+                >
+                  Email body
                 </label>
                 <textarea
                   rows={9}
                   value={body}
                   onChange={(e) => setBody(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-slate-700 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 text-xs leading-relaxed"
+                  style={{ ...inputStyle, resize: "vertical" }}
+                  onFocus={(e) => { (e.target as HTMLElement).style.borderColor = "var(--ring)"; }}
+                  onBlur={(e) => { (e.target as HTMLElement).style.borderColor = "var(--border)"; }}
                 />
               </div>
-
-              <p className="text-[10px] text-slate-400 italic">
-                Tip: Feel free to customize dates, party names, or specific wording before sending.
+              <p className="text-[10px] italic" style={{ color: "var(--muted)" }}>
+                Tip: Customise dates, party names or specific wording before sending.
               </p>
             </div>
           )}
         </div>
 
-        {/* Footer actions */}
-        <div className="p-4 border-t border-slate-100 flex items-center justify-between gap-2 bg-slate-50">
+        {/* Footer */}
+        <div
+          className="p-4 border-t flex items-center justify-between gap-2"
+          style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-2)" }}
+        >
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 rounded-xl hover:bg-slate-200/50 transition-colors"
+            className="px-4 py-2 text-xs font-semibold rounded-xl transition-colors"
+            style={{ color: "var(--foreground-2)" }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = "var(--border)"; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = "transparent"; }}
           >
             Cancel
           </button>
@@ -220,21 +251,34 @@ export default function DraftEmailModal({ traps, docType, isOpen, onClose }: Dra
               type="button"
               onClick={handleCopy}
               disabled={loading || !body}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-300 text-slate-700 bg-white hover:bg-slate-50 text-xs font-semibold shadow-xs disabled:opacity-40 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors disabled:opacity-40"
+              style={{
+                border: "1px solid var(--border-strong)",
+                color: "var(--foreground-2)",
+                backgroundColor: "transparent",
+              }}
             >
-              {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
-              {copied ? "Copied!" : "Copy Email"}
+              {copied ? (
+                <Check className="h-3.5 w-3.5" style={{ color: "var(--sev-low)" }} strokeWidth={1.75} />
+              ) : (
+                <Copy className="h-3.5 w-3.5" strokeWidth={1.75} />
+              )}
+              {copied ? "Copied!" : "Copy email"}
             </button>
             <a
               href={mailtoHref}
               target="_blank"
               rel="noopener noreferrer"
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl bg-indigo-700 hover:bg-indigo-800 text-white text-xs font-semibold shadow-xs transition-colors ${
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
                 loading || !body ? "pointer-events-none opacity-40" : ""
               }`}
+              style={{
+                backgroundColor: "var(--primary)",
+                color: "var(--primary-foreground)",
+              }}
             >
-              <ExternalLink className="h-3.5 w-3.5" />
-              Open Mail
+              <ExternalLink className="h-3.5 w-3.5" strokeWidth={1.75} />
+              Open mail
             </a>
           </div>
         </div>

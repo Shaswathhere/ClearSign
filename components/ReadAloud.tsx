@@ -1,11 +1,10 @@
 "use client";
 
 import React, { useState, useRef, useCallback, useEffect } from "react";
-import { Play, Pause, VolumeX } from "lucide-react";
+import { Volume2, Pause, VolumeX } from "lucide-react";
 import type { SupportedLocale } from "./LanguageSwitch";
 
 interface ReadAloudProps {
-  /** Text segments to read in order */
   segments: string[];
   locale: SupportedLocale;
 }
@@ -26,65 +25,39 @@ export default function ReadAloud({ segments, locale }: ReadAloudProps) {
   const [unavailable, setUnavailable] = useState(false);
   const utterRef = useRef<SpeechSynthesisUtterance | null>(null);
 
-  // Stop when locale or segments change
   useEffect(() => {
     window.speechSynthesis?.cancel();
-    const timer = setTimeout(() => {
-      setPlaying(false);
-    }, 0);
+    const timer = setTimeout(() => setPlaying(false), 0);
     return () => clearTimeout(timer);
   }, [locale, segments]);
 
-  // Stop on unmount
   useEffect(() => {
-    return () => {
-      window.speechSynthesis?.cancel();
-    };
+    return () => { window.speechSynthesis?.cancel(); };
   }, []);
 
-  const getVoice = useCallback(
-    (lang: string): SpeechSynthesisVoice | null => {
-      const voices = window.speechSynthesis.getVoices();
-      return (
-        voices.find((v) => v.lang === lang) ||
-        voices.find((v) => v.lang.startsWith(lang.slice(0, 2))) ||
-        null
-      );
-    },
-    []
-  );
+  const getVoice = useCallback((lang: string): SpeechSynthesisVoice | null => {
+    const voices = window.speechSynthesis.getVoices();
+    return (
+      voices.find((v) => v.lang === lang) ||
+      voices.find((v) => v.lang.startsWith(lang.slice(0, 2))) ||
+      null
+    );
+  }, []);
 
   const handleToggle = useCallback(() => {
-    if (!("speechSynthesis" in window)) {
-      setUnavailable(true);
-      return;
-    }
-
-    if (playing) {
-      window.speechSynthesis.cancel();
-      setPlaying(false);
-      return;
-    }
-
+    if (!("speechSynthesis" in window)) { setUnavailable(true); return; }
+    if (playing) { window.speechSynthesis.cancel(); setPlaying(false); return; }
     const lang = LANG_BCP47[locale];
     const voice = getVoice(lang);
-
-    // If non-English and no matching voice found, warn user
-    if (locale !== "en" && !voice) {
-      setUnavailable(true);
-      return;
-    }
+    if (locale !== "en" && !voice) { setUnavailable(true); return; }
     setUnavailable(false);
-
     const fullText = segments.join(". ");
     const utter = new SpeechSynthesisUtterance(fullText);
     utter.lang = lang;
     if (voice) utter.voice = voice;
     utter.rate = 0.95;
-
     utter.onend = () => setPlaying(false);
     utter.onerror = () => setPlaying(false);
-
     utterRef.current = utter;
     window.speechSynthesis.speak(utter);
     setPlaying(true);
@@ -92,9 +65,13 @@ export default function ReadAloud({ segments, locale }: ReadAloudProps) {
 
   if (unavailable) {
     return (
-      <div className="flex items-center gap-1.5 text-[11px] text-slate-400" role="status">
-        <VolumeX className="h-3.5 w-3.5 shrink-0" />
-        Audio not available for this language on your device.
+      <div
+        className="flex items-center gap-1.5 text-[11px]"
+        role="status"
+        style={{ color: "var(--muted)" }}
+      >
+        <VolumeX className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
+        Audio unavailable for this language.
       </div>
     );
   }
@@ -103,15 +80,27 @@ export default function ReadAloud({ segments, locale }: ReadAloudProps) {
     <button
       type="button"
       onClick={handleToggle}
-      className={`flex items-center gap-1.5 text-xs font-semibold transition-colors rounded-lg px-2.5 py-1.5 min-h-[36px] ${
-        playing
-          ? "bg-indigo-700 text-white"
-          : "bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200"
-      }`}
+      className="flex items-center gap-1.5 text-xs font-semibold transition-colors rounded-xl px-4"
+      style={{
+        height: "40px",
+        backgroundColor: playing ? "var(--primary-hover)" : "var(--primary)",
+        color: "var(--primary-foreground)",
+        minWidth: "96px",
+      }}
       aria-label={playing ? "Pause read-aloud" : "Read summary aloud"}
+      onMouseEnter={(e) => {
+        if (!playing) (e.currentTarget as HTMLElement).style.backgroundColor = "var(--primary-hover)";
+      }}
+      onMouseLeave={(e) => {
+        if (!playing) (e.currentTarget as HTMLElement).style.backgroundColor = "var(--primary)";
+      }}
     >
-      {playing ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
-      {playing ? "Pause" : "▶ Listen"}
+      {playing ? (
+        <Pause className="h-4 w-4" strokeWidth={1.75} />
+      ) : (
+        <Volume2 className="h-4 w-4" strokeWidth={1.75} />
+      )}
+      {playing ? "Pause" : "Listen"}
     </button>
   );
 }
