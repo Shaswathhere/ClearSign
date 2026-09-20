@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-import { FileText, Upload, Camera, ArrowRight, AlertCircle, Sparkles } from "lucide-react";
+import { FileText, Upload, Camera, ArrowRight, AlertCircle, Sparkles, ShieldCheck } from "lucide-react";
 import { extractTextFromPdf } from "@/lib/pdf";
+import { redactPii } from "@/lib/redact";
 import imageCompression from "browser-image-compression";
 
 interface InputPanelProps {
@@ -16,6 +17,7 @@ export default function InputPanel({ onAnalyze, isLoading = false }: InputPanelP
   const [error, setError] = useState<string | null>(null);
   const [isProcessingFile, setIsProcessingFile] = useState(false);
   const [photoTranscript, setPhotoTranscript] = useState<string | null>(null);
+  const [privacyShield, setPrivacyShield] = useState(true);
 
   // "Try a sample" handler
   const loadSample = async (type: "gym" | "rental" | "loan") => {
@@ -49,7 +51,8 @@ export default function InputPanel({ onAnalyze, isLoading = false }: InputPanelP
       setError("Document text exceeds the 60,000 characters limit (~30 pages). Please trim the document.");
       return;
     }
-    onAnalyze(pasteText);
+    const finalContent = privacyShield ? redactPii(pasteText).redacted : pasteText;
+    onAnalyze(finalContent);
   };
 
   // PDF Upload handler (100% in-browser extraction via pdf.js)
@@ -67,7 +70,8 @@ export default function InputPanel({ onAnalyze, isLoading = false }: InputPanelP
       }
       setPasteText(extracted);
       setActiveTab("paste");
-      onAnalyze(extracted);
+      const finalContent = privacyShield ? redactPii(extracted).redacted : extracted;
+      onAnalyze(finalContent);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Please make sure the PDF is text-based.";
       setError("Error parsing PDF: " + msg);
@@ -158,14 +162,22 @@ export default function InputPanel({ onAnalyze, isLoading = false }: InputPanelP
         />
 
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
-          <span className="text-xs text-slate-500">
-            {photoTranscript.length} characters extracted
-          </span>
+          <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700 select-none">
+            <input
+              type="checkbox"
+              checked={privacyShield}
+              onChange={(e) => setPrivacyShield(e.target.checked)}
+              className="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500 accent-teal-600"
+            />
+            <ShieldCheck className="h-4 w-4 text-teal-600 shrink-0" />
+            <span>Privacy Shield (Mask PAN, Aadhaar, Phone, Email)</span>
+          </label>
           <button
             type="button"
             disabled={isLoading || photoTranscript.trim().length < 100}
             onClick={() => {
-              onAnalyze(photoTranscript);
+              const finalContent = privacyShield ? redactPii(photoTranscript).redacted : photoTranscript;
+              onAnalyze(finalContent);
             }}
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-teal-700 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-teal-800 transition-colors disabled:opacity-50 min-h-[48px]"
           >
@@ -280,6 +292,19 @@ export default function InputPanel({ onAnalyze, isLoading = false }: InputPanelP
                   {pasteText.length.toLocaleString()} chars
                 </span>
               </div>
+            </div>
+
+            <div className="flex items-center justify-between flex-wrap gap-2 px-1">
+              <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700 select-none py-1">
+                <input
+                  type="checkbox"
+                  checked={privacyShield}
+                  onChange={(e) => setPrivacyShield(e.target.checked)}
+                  className="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500 accent-teal-600"
+                />
+                <ShieldCheck className="h-4 w-4 text-teal-600 shrink-0" />
+                <span>Privacy Shield: Mask phone numbers, Aadhaar, PAN, emails</span>
+              </label>
             </div>
 
             <button

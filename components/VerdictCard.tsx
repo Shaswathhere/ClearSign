@@ -1,7 +1,10 @@
 "use client";
 
-import React from "react";
-import { AlertTriangle, CheckCircle, AlertOctagon, ShieldAlert, Sparkles, ShieldCheck } from "lucide-react";
+import React, { useState, useCallback } from "react";
+import {
+  AlertTriangle, CheckCircle, AlertOctagon, ShieldAlert, Sparkles, ShieldCheck,
+  Copy, Share2, Check,
+} from "lucide-react";
 import { RiskBand } from "@/lib/score";
 
 interface VerdictCardProps {
@@ -21,6 +24,8 @@ export default function VerdictCard({
   removedUnverified = 0,
   clauseCount = 0,
 }: VerdictCardProps) {
+  const [copied, setCopied] = useState(false);
+
   const getBandConfig = () => {
     switch (band) {
       case "low":
@@ -30,7 +35,6 @@ export default function VerdictCard({
           cardBorder: "border-emerald-200",
           title: "LOW RISK",
           subtitle: "Looks fairly standard",
-          dotColor: "bg-emerald-500",
         };
       case "moderate":
         return {
@@ -39,7 +43,6 @@ export default function VerdictCard({
           cardBorder: "border-amber-200",
           title: "MODERATE RISK",
           subtitle: "Review before signing",
-          dotColor: "bg-amber-500",
         };
       case "high":
         return {
@@ -48,7 +51,6 @@ export default function VerdictCard({
           cardBorder: "border-rose-200",
           title: "HIGH RISK",
           subtitle: "Negotiate or get advice first",
-          dotColor: "bg-rose-600",
         };
       case "severe":
       default:
@@ -58,14 +60,56 @@ export default function VerdictCard({
           cardBorder: "border-red-300",
           title: "SEVERE RISK",
           subtitle: "Serious concerns, get advice before signing",
-          dotColor: "bg-red-700",
         };
     }
   };
 
   const config = getBandConfig();
-
   const formattedDocType = docType.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
+  const summaryText = [
+    `ClearSign Analysis — ${formattedDocType}`,
+    `Risk Score: ${score}/100 (${config.title})`,
+    `${config.subtitle}`,
+    "",
+    ...summary.map((s) => `• ${s}`),
+    "",
+    "Reading aid, not legal advice. Powered by ClearSign.",
+  ].join("\n");
+
+  const handleCopy = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(summaryText);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Fallback: create a temp textarea
+      const ta = document.createElement("textarea");
+      ta.value = summaryText;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  }, [summaryText]);
+
+  const handleShare = useCallback(async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `ClearSign: ${formattedDocType} Analysis`,
+          text: summaryText,
+        });
+      } catch {
+        // Dismissed by user — ignore
+      }
+    } else {
+      // Fallback to copy
+      handleCopy();
+    }
+  }, [summaryText, formattedDocType, handleCopy]);
 
   return (
     <div className={`rounded-2xl border-2 ${config.cardBorder} bg-white p-5 sm:p-7 shadow-sm space-y-5 transition-all`}>
@@ -86,7 +130,7 @@ export default function VerdictCard({
           <p className="text-sm font-semibold text-slate-700">{config.subtitle}</p>
         </div>
 
-        {/* Big Score Indicator */}
+        {/* Big Score */}
         <div className="flex items-baseline gap-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 self-start sm:self-auto">
           <span className="text-3xl font-black text-slate-900 tracking-tight">{score}</span>
           <span className="text-xs font-bold text-slate-400">/ 100</span>
@@ -108,19 +152,46 @@ export default function VerdictCard({
         </ul>
       </div>
 
-      {/* Transparency Stat & Legal Disclaimer Notice */}
+      {/* Footer: transparency + copy/share + disclaimer */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-slate-100 text-xs">
-        {removedUnverified > 0 ? (
-          <span className="inline-flex items-center gap-1.5 text-slate-600 bg-slate-50 px-2.5 py-1 rounded-md border border-slate-200">
-            <ShieldCheck className="h-4 w-4 text-emerald-600" />
-            <strong>{removedUnverified}</strong> unverified AI findings removed
-          </span>
-        ) : (
-          <span className="inline-flex items-center gap-1.5 text-slate-500">
-            <ShieldCheck className="h-4 w-4 text-emerald-600" />
-            All findings verified with source text
-          </span>
-        )}
+        <div className="flex items-center gap-2 flex-wrap">
+          {removedUnverified > 0 ? (
+            <span className="inline-flex items-center gap-1.5 text-slate-600 bg-slate-50 px-2.5 py-1 rounded-md border border-slate-200">
+              <ShieldCheck className="h-4 w-4 text-emerald-600" />
+              <strong>{removedUnverified}</strong> unverified AI findings removed
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 text-slate-500">
+              <ShieldCheck className="h-4 w-4 text-emerald-600" />
+              All findings verified with source text
+            </span>
+          )}
+
+          {/* Copy/Share buttons */}
+          <button
+            type="button"
+            id="verdict-copy-btn"
+            onClick={handleCopy}
+            title="Copy summary to clipboard"
+            aria-label="Copy summary"
+            className="inline-flex items-center gap-1 text-slate-500 hover:text-teal-700 bg-white border border-slate-200 rounded-lg px-2 py-1 transition-colors"
+          >
+            {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
+            {copied ? "Copied!" : "Copy"}
+          </button>
+
+          <button
+            type="button"
+            id="verdict-share-btn"
+            onClick={handleShare}
+            title="Share summary"
+            aria-label="Share summary"
+            className="inline-flex items-center gap-1 text-slate-500 hover:text-teal-700 bg-white border border-slate-200 rounded-lg px-2 py-1 transition-colors"
+          >
+            <Share2 className="h-3.5 w-3.5" />
+            Share
+          </button>
+        </div>
 
         <span className="text-slate-500 font-medium italic">
           Reading aid, not legal advice

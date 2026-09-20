@@ -9,3 +9,6 @@ coverage
 .env
 .env.*
 !.env.example
+# AI scaffold files - do not commit
+AGENTS.md
+CLAUDE.md

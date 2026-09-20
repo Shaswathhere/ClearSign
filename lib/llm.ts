@@ -56,6 +56,31 @@ export async function transcribeImages(base64Images: string[]): Promise<string> 
   return response.choices[0]?.message?.content?.trim() || "";
 }
 
+export interface ChatMessage {
+  role: "system" | "user" | "assistant";
+  content: string;
+}
+
+/**
+ * Free-form (text) LLM call – used by /api/ask.
+ */
+export async function callLlm(
+  messages: ChatMessage[],
+  opts: { maxTokens?: number; temperature?: number; model?: string } = {}
+): Promise<string> {
+  const client = getGroqClient();
+  const { maxTokens = 1024, temperature = 0.2, model = DEFAULT_MODEL } = opts;
+
+  const completion = await client.chat.completions.create({
+    model,
+    messages,
+    temperature,
+    max_tokens: maxTokens,
+  });
+
+  return completion.choices[0]?.message?.content?.trim() || "";
+}
+
 /**
  * Calls the LLM in JSON mode with automatic single retry on schema/parsing failure.
  */
