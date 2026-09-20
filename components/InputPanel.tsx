@@ -158,7 +158,7 @@ export default function InputPanel({ onAnalyze, isLoading = false }: InputPanelP
           value={photoTranscript}
           onChange={(e) => setPhotoTranscript(e.target.value)}
           rows={12}
-          className="w-full rounded-xl border border-slate-300 p-4 font-mono text-xs leading-relaxed text-slate-800 focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20 outline-none"
+          className="w-full rounded-xl border border-slate-300 p-4 font-mono text-xs leading-relaxed text-slate-800 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 outline-none"
         />
 
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
@@ -167,9 +167,9 @@ export default function InputPanel({ onAnalyze, isLoading = false }: InputPanelP
               type="checkbox"
               checked={privacyShield}
               onChange={(e) => setPrivacyShield(e.target.checked)}
-              className="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500 accent-teal-600"
+              className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 accent-indigo-600"
             />
-            <ShieldCheck className="h-4 w-4 text-teal-600 shrink-0" />
+            <ShieldCheck className="h-4 w-4 text-indigo-600 shrink-0" />
             <span>Privacy Shield (Mask PAN, Aadhaar, Phone, Email)</span>
           </label>
           <button
@@ -179,7 +179,7 @@ export default function InputPanel({ onAnalyze, isLoading = false }: InputPanelP
               const finalContent = privacyShield ? redactPii(photoTranscript).redacted : photoTranscript;
               onAnalyze(finalContent);
             }}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-teal-700 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-teal-800 transition-colors disabled:opacity-50 min-h-[48px]"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-700 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-800 transition-colors disabled:opacity-50 min-h-[48px]"
           >
             {isLoading ? "Analyzing..." : "Analyze Verified Text"}
             <ArrowRight className="h-4 w-4" />
@@ -192,10 +192,10 @@ export default function InputPanel({ onAnalyze, isLoading = false }: InputPanelP
   return (
     <div className="space-y-6">
       {/* Sample Contract Shortcuts */}
-      <div className="bg-teal-50/70 border border-teal-200/80 rounded-2xl p-4 sm:p-5">
+      <div className="bg-indigo-50/70 border border-indigo-200/80 rounded-2xl p-4 sm:p-5">
         <div className="flex items-center gap-2 mb-3">
-          <Sparkles className="h-4 w-4 text-teal-700" />
-          <span className="text-xs font-bold uppercase tracking-wider text-teal-800">
+          <Sparkles className="h-4 w-4 text-indigo-700" />
+          <span className="text-xs font-bold uppercase tracking-wider text-indigo-800">
             Try an Indian sample contract:
           </span>
         </div>
@@ -203,26 +203,26 @@ export default function InputPanel({ onAnalyze, isLoading = false }: InputPanelP
           <button
             type="button"
             onClick={() => loadSample("gym")}
-            className="flex items-center justify-between rounded-xl bg-white px-3.5 py-3 text-left text-xs font-semibold text-slate-800 border border-teal-200 shadow-2xs hover:border-teal-600 hover:bg-teal-50/50 transition-all min-h-[48px]"
+            className="flex items-center justify-between rounded-xl bg-white px-3.5 py-3 text-left text-xs font-semibold text-slate-800 border border-indigo-200 shadow-2xs hover:border-indigo-600 hover:bg-indigo-50/50 transition-all min-h-[48px]"
           >
             <span>🏋️ Gym Membership</span>
-            <ArrowRight className="h-3.5 w-3.5 text-teal-600 shrink-0" />
+            <ArrowRight className="h-3.5 w-3.5 text-indigo-600 shrink-0" />
           </button>
           <button
             type="button"
             onClick={() => loadSample("rental")}
-            className="flex items-center justify-between rounded-xl bg-white px-3.5 py-3 text-left text-xs font-semibold text-slate-800 border border-teal-200 shadow-2xs hover:border-teal-600 hover:bg-teal-50/50 transition-all min-h-[48px]"
+            className="flex items-center justify-between rounded-xl bg-white px-3.5 py-3 text-left text-xs font-semibold text-slate-800 border border-indigo-200 shadow-2xs hover:border-indigo-600 hover:bg-indigo-50/50 transition-all min-h-[48px]"
           >
             <span>🏠 Rental Agreement</span>
-            <ArrowRight className="h-3.5 w-3.5 text-teal-600 shrink-0" />
+            <ArrowRight className="h-3.5 w-3.5 text-indigo-600 shrink-0" />
           </button>
           <button
             type="button"
             onClick={() => loadSample("loan")}
-            className="flex items-center justify-between rounded-xl bg-white px-3.5 py-3 text-left text-xs font-semibold text-slate-800 border border-teal-200 shadow-2xs hover:border-teal-600 hover:bg-teal-50/50 transition-all min-h-[48px]"
+            className="flex items-center justify-between rounded-xl bg-white px-3.5 py-3 text-left text-xs font-semibold text-slate-800 border border-indigo-200 shadow-2xs hover:border-indigo-600 hover:bg-indigo-50/50 transition-all min-h-[48px]"
           >
             <span>💳 Personal Loan Offer</span>
-            <ArrowRight className="h-3.5 w-3.5 text-teal-600 shrink-0" />
+            <ArrowRight className="h-3.5 w-3.5 text-indigo-600 shrink-0" />
           </button>
         </div>
       </div>
@@ -235,7 +235,7 @@ export default function InputPanel({ onAnalyze, isLoading = false }: InputPanelP
             onClick={() => setActiveTab("paste")}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all min-h-[48px] ${
               activeTab === "paste"
-                ? "bg-teal-700 text-white shadow-sm"
+                ? "bg-indigo-700 text-white shadow-sm"
                 : "text-slate-600 hover:bg-slate-100"
             }`}
           >
@@ -247,7 +247,7 @@ export default function InputPanel({ onAnalyze, isLoading = false }: InputPanelP
             onClick={() => setActiveTab("pdf")}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all min-h-[48px] ${
               activeTab === "pdf"
-                ? "bg-teal-700 text-white shadow-sm"
+                ? "bg-indigo-700 text-white shadow-sm"
                 : "text-slate-600 hover:bg-slate-100"
             }`}
           >
@@ -259,7 +259,7 @@ export default function InputPanel({ onAnalyze, isLoading = false }: InputPanelP
             onClick={() => setActiveTab("photo")}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all min-h-[48px] ${
               activeTab === "photo"
-                ? "bg-teal-700 text-white shadow-sm"
+                ? "bg-indigo-700 text-white shadow-sm"
                 : "text-slate-600 hover:bg-slate-100"
             }`}
           >
@@ -284,7 +284,7 @@ export default function InputPanel({ onAnalyze, isLoading = false }: InputPanelP
                 onChange={(e) => setPasteText(e.target.value)}
                 placeholder="Paste contract text, terms of service, loan agreement or rental lease here (minimum 200 characters)..."
                 rows={8}
-                className="w-full rounded-xl border border-slate-200 p-4 text-sm leading-relaxed text-slate-800 placeholder-slate-400 focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20 outline-none transition-all resize-y"
+                className="w-full rounded-xl border border-slate-200 p-4 text-sm leading-relaxed text-slate-800 placeholder-slate-400 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 outline-none transition-all resize-y"
               />
               <div className="mt-1 flex items-center justify-between text-[11px] text-slate-400 px-1">
                 <span>Min 200 · Max 60,000 characters</span>
@@ -300,9 +300,9 @@ export default function InputPanel({ onAnalyze, isLoading = false }: InputPanelP
                   type="checkbox"
                   checked={privacyShield}
                   onChange={(e) => setPrivacyShield(e.target.checked)}
-                  className="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500 accent-teal-600"
+                  className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 accent-indigo-600"
                 />
-                <ShieldCheck className="h-4 w-4 text-teal-600 shrink-0" />
+                <ShieldCheck className="h-4 w-4 text-indigo-600 shrink-0" />
                 <span>Privacy Shield: Mask phone numbers, Aadhaar, PAN, emails</span>
               </label>
             </div>
@@ -310,7 +310,7 @@ export default function InputPanel({ onAnalyze, isLoading = false }: InputPanelP
             <button
               type="submit"
               disabled={isLoading || pasteText.trim().length < 200 || pasteText.length > 60000}
-              className="w-full flex items-center justify-center gap-2 rounded-xl bg-teal-700 px-6 py-3.5 text-sm font-semibold text-white shadow-sm hover:bg-teal-800 transition-colors disabled:opacity-50 min-h-[48px]"
+              className="w-full flex items-center justify-center gap-2 rounded-xl bg-indigo-700 px-6 py-3.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-800 transition-colors disabled:opacity-50 min-h-[48px]"
             >
               {isLoading ? "Reading and analyzing..." : "Analyze Contract Now"}
               <ArrowRight className="h-4 w-4" />
@@ -320,8 +320,8 @@ export default function InputPanel({ onAnalyze, isLoading = false }: InputPanelP
 
         {/* Tab 2: Upload PDF */}
         {activeTab === "pdf" && (
-          <div className="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center space-y-4 hover:border-teal-600 transition-colors">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-teal-50 text-teal-700">
+          <div className="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center space-y-4 hover:border-indigo-600 transition-colors">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-indigo-50 text-indigo-700">
               <Upload className="h-6 w-6" />
             </div>
             <div className="space-y-1">
@@ -332,7 +332,7 @@ export default function InputPanel({ onAnalyze, isLoading = false }: InputPanelP
                 Processed 100% inside your browser. The PDF never leaves your device.
               </p>
             </div>
-            <label className="inline-flex items-center gap-2 rounded-xl bg-teal-700 px-5 py-2.5 text-xs font-semibold text-white cursor-pointer hover:bg-teal-800 transition-colors min-h-[48px]">
+            <label className="inline-flex items-center gap-2 rounded-xl bg-indigo-700 px-5 py-2.5 text-xs font-semibold text-white cursor-pointer hover:bg-indigo-800 transition-colors min-h-[48px]">
               {isProcessingFile ? "Extracting text..." : "Select PDF Document"}
               <input
                 type="file"
@@ -347,8 +347,8 @@ export default function InputPanel({ onAnalyze, isLoading = false }: InputPanelP
 
         {/* Tab 3: Photo / Camera */}
         {activeTab === "photo" && (
-          <div className="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center space-y-4 hover:border-teal-600 transition-colors">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-teal-50 text-teal-700">
+          <div className="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center space-y-4 hover:border-indigo-600 transition-colors">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-indigo-50 text-indigo-700">
               <Camera className="h-6 w-6" />
             </div>
             <div className="space-y-1">
@@ -359,7 +359,7 @@ export default function InputPanel({ onAnalyze, isLoading = false }: InputPanelP
                 Upload 1 to 5 photos. Photos are compressed on your device and transcribed verbatim.
               </p>
             </div>
-            <label className="inline-flex items-center gap-2 rounded-xl bg-teal-700 px-5 py-2.5 text-xs font-semibold text-white cursor-pointer hover:bg-teal-800 transition-colors min-h-[48px]">
+            <label className="inline-flex items-center gap-2 rounded-xl bg-indigo-700 px-5 py-2.5 text-xs font-semibold text-white cursor-pointer hover:bg-indigo-800 transition-colors min-h-[48px]">
               {isProcessingFile ? "Compressing & Transcribing..." : "Take or Choose Photos"}
               <input
                 type="file"

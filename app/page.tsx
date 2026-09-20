@@ -54,8 +54,8 @@ export default function Home() {
     <div className="max-w-3xl mx-auto space-y-8 py-2 sm:py-6">
       {/* Hero Section */}
       <div className="text-center space-y-3">
-        <div className="inline-flex items-center gap-1.5 rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-800 border border-teal-200">
-          <Sparkles className="h-3.5 w-3.5 text-teal-600" />
+        <div className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-800 border border-indigo-200">
+          <Sparkles className="h-3.5 w-3.5 text-indigo-600" />
           Understand before you sign or agree
         </div>
         <h1 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
@@ -80,7 +80,7 @@ export default function Home() {
               type="button"
               onClick={() => handleSample(s)}
               disabled={!!loadingSample || analyzing}
-              className="flex items-center gap-2 rounded-xl border border-teal-200 bg-white text-teal-700 text-xs font-semibold px-4 py-2.5 hover:bg-teal-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
+              className="flex items-center gap-2 rounded-xl border border-indigo-200 bg-white text-indigo-700 text-xs font-semibold px-4 py-2.5 hover:bg-indigo-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
             >
               {loadingSample === s.key ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -104,7 +104,7 @@ export default function Home() {
       {/* Privacy Guarantee Card */}
       <div className="rounded-2xl bg-white border border-slate-200 p-5 shadow-2xs space-y-3">
         <div className="flex items-center gap-2 text-slate-900 font-bold text-sm">
-          <Shield className="h-4 w-4 text-teal-700" />
+          <Shield className="h-4 w-4 text-indigo-700" />
           <span>Our Privacy &amp; Verification Guarantees</span>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-600">

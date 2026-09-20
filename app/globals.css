@@ -1,36 +1,102 @@
 @import "tailwindcss";
 
+/* ─── Indigo Ink: Light Mode Tokens ─────────────────────────────────────────── */
 :root {
-  --font-inter: 'Inter', system-ui, -apple-system, sans-serif;
+  /* Font variables (loaded via next/font in layout.tsx) */
+  --font-primary: 'Geist', system-ui, -apple-system, sans-serif;
   --font-noto-devanagari: 'Noto Sans Devanagari', sans-serif;
   --font-noto-tamil: 'Noto Sans Tamil', sans-serif;
+
+  /* Brand — Indigo Ink */
+  --brand-50:  #eef2ff;
+  --brand-100: #e0e7ff;
+  --brand-200: #c7d2fe;
+  --brand-300: #a5b4fc;
+  --brand-400: #818cf8;
+  --brand-500: #6366f1;
+  --brand-600: #4f46e5;
+  --brand-700: #4338ca;
+  --brand-800: #3730a3;
+  --brand-900: #312e81;
+  --brand-950: #1e1b4b;
+
+  /* Surface */
+  --surface-page:   #f8f9ff;
+  --surface-card:   #ffffff;
+  --surface-muted:  #f1f5f9;
+  --surface-border: #e2e8f0;
+
+  /* Text */
+  --text-primary:   #0f172a;
+  --text-secondary: #475569;
+  --text-muted:     #94a3b8;
+
+  /* Selection */
+  --selection-bg:   #c7d2fe;
+  --selection-text: #312e81;
 }
 
+/* ─── Indigo Ink: Dark Mode Tokens ──────────────────────────────────────────── */
+.dark {
+  --brand-50:  #1e1b4b;
+  --brand-100: #2e2a6e;
+  --brand-200: #3730a3;
+  --brand-300: #4338ca;
+
+  --surface-page:   #0f0f1a;
+  --surface-card:   #161625;
+  --surface-muted:  #1e1e30;
+  --surface-border: #2d2d45;
+
+  --text-primary:   #e2e8f0;
+  --text-secondary: #94a3b8;
+  --text-muted:     #64748b;
+
+  --selection-bg:   #312e81;
+  --selection-text: #c7d2fe;
+}
+
+/* ─── Base ──────────────────────────────────────────────────────────────────── */
 body {
-  font-family: var(--font-inter);
+  font-family: var(--font-primary);
+  background-color: var(--surface-page);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-.lang-hi {
-  font-family: var(--font-noto-devanagari), var(--font-inter);
+::selection {
+  background-color: var(--selection-bg);
+  color: var(--selection-text);
 }
 
-.lang-ta {
-  font-family: var(--font-noto-tamil), var(--font-inter);
+/* ─── Language font overrides ───────────────────────────────────────────────── */
+.lang-hi { font-family: var(--font-noto-devanagari), var(--font-primary); }
+.lang-ta { font-family: var(--font-noto-tamil), var(--font-primary); }
+
+/* ─── Dark mode overrides ───────────────────────────────────────────────────── */
+.dark .bg-white          { background-color: var(--surface-card) !important; }
+.dark .bg-slate-50       { background-color: var(--surface-muted) !important; }
+.dark .bg-slate-100      { background-color: var(--surface-muted) !important; }
+.dark .border-slate-100  { border-color: var(--surface-border) !important; }
+.dark .border-slate-200  { border-color: var(--surface-border) !important; }
+.dark .text-slate-900    { color: var(--text-primary) !important; }
+.dark .text-slate-800    { color: var(--text-primary) !important; }
+.dark .text-slate-700    { color: var(--text-secondary) !important; }
+.dark .text-slate-600    { color: var(--text-secondary) !important; }
+.dark .text-slate-500    { color: var(--text-muted) !important; }
+.dark .text-slate-400    { color: var(--text-muted) !important; }
+
+/* ─── Smooth color transitions ──────────────────────────────────────────────── */
+*, *::before, *::after {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-timing-function: ease;
+  transition-duration: 200ms;
 }
 
+/* ─── Print styles ──────────────────────────────────────────────────────────── */
 @media print {
-  header, nav, button, .no-print {
-    display: none !important;
-  }
-  body {
-    background: #ffffff !important;
-    color: #0f172a !important;
-  }
-  .shadow-sm, .shadow-md, .shadow-xl, .shadow-2xl {
-    box-shadow: none !important;
-  }
-  * {
-    print-color-adjust: exact;
-    -webkit-print-color-adjust: exact;
-  }
+  header, nav, button, .no-print { display: none !important; }
+  body { background: #ffffff !important; color: #0f172a !important; }
+  .shadow-sm, .shadow-md, .shadow-xl, .shadow-2xl { box-shadow: none !important; }
+  * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
 }

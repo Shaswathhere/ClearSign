@@ -33,20 +33,20 @@ export default function ProgressSteps({ currentStage }: ProgressStepsProps) {
             <div
               key={s.step}
               className={`flex items-start gap-3 p-3 rounded-xl transition-all ${
-                isCurrent ? "bg-teal-50 border border-teal-200" : isDone ? "opacity-80" : "opacity-40"
+                isCurrent ? "bg-indigo-50 border border-indigo-200" : isDone ? "opacity-80" : "opacity-40"
               }`}
             >
               <div className="mt-0.5 shrink-0">
                 {isDone ? (
                   <CheckCircle2 className="h-5 w-5 text-emerald-600" />
                 ) : isCurrent ? (
-                  <Loader2 className="h-5 w-5 text-teal-700 animate-spin" />
+                  <Loader2 className="h-5 w-5 text-indigo-700 animate-spin" />
                 ) : (
                   <Circle className="h-5 w-5 text-slate-300" />
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <p className={`text-xs font-bold ${isCurrent ? "text-teal-900" : "text-slate-800"}`}>
+                <p className={`text-xs font-bold ${isCurrent ? "text-indigo-900" : "text-slate-800"}`}>
                   Stage {s.step}: {s.label}
                 </p>
                 <p className="text-[11px] text-slate-500 truncate">{s.detail}</p>

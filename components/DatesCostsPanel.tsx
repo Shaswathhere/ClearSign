@@ -42,7 +42,7 @@ function ShowWorking({ children }: { children: React.ReactNode }) {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-1 text-[11px] font-semibold text-teal-700 hover:text-teal-800 transition-colors"
+        className="flex items-center gap-1 text-[11px] font-semibold text-indigo-700 hover:text-indigo-800 transition-colors"
       >
         {open ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
         Show working
@@ -118,7 +118,7 @@ function DeadlinesSection({ result }: { result: AnalyzeResponse }) {
                 <label className="text-[11px] font-semibold text-blue-700 block">{anchorLabels[key]}</label>
                 <input
                   type="date"
-                  className="w-full rounded-xl border border-blue-200 bg-white px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  className="w-full rounded-xl border border-blue-200 bg-white px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   value={anchorDates[key] || ""}
                   onChange={(e) => setAnchorDates((prev) => ({ ...prev, [key]: e.target.value }))}
                 />
@@ -137,9 +137,9 @@ function DeadlinesSection({ result }: { result: AnalyzeResponse }) {
           >
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-2 min-w-0">
-                <Clock className={`h-4 w-4 shrink-0 ${d.isPast ? "text-slate-400" : "text-teal-600"}`} />
+                <Clock className={`h-4 w-4 shrink-0 ${d.isPast ? "text-slate-400" : "text-indigo-600"}`} />
                 <span className="text-xs font-bold text-slate-800 truncate">{d.label}</span>
-                <span className="shrink-0 text-[10px] font-bold bg-teal-100 text-teal-700 px-1.5 py-0.5 rounded-full">{d.clauseId}</span>
+                <span className="shrink-0 text-[10px] font-bold bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded-full">{d.clauseId}</span>
               </div>
               <DaysChip days={d.daysFromNow} />
             </div>
@@ -161,7 +161,7 @@ function DeadlinesSection({ result }: { result: AnalyzeResponse }) {
         type="button"
         onClick={handleDownloadIcs}
         disabled={icsCount === 0}
-        className="flex items-center gap-2 rounded-xl bg-teal-700 text-white text-xs font-semibold px-4 py-2.5 hover:bg-teal-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed min-h-[48px]"
+        className="flex items-center gap-2 rounded-xl bg-indigo-700 text-white text-xs font-semibold px-4 py-2.5 hover:bg-indigo-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed min-h-[48px]"
       >
         <Download className="h-4 w-4" />
         Download Calendar Reminders ({icsCount} event{icsCount !== 1 ? "s" : ""}) .ics
@@ -197,7 +197,7 @@ function LoanSection({ loan }: { loan: NonNullable<AnalyzeResponse["terms"]["loa
       {/* Monthly EMI card */}
       <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-3">
         <div className="flex items-center gap-2 text-sm font-bold text-slate-800">
-          <DollarSign className="h-4 w-4 text-teal-600" />
+          <DollarSign className="h-4 w-4 text-indigo-600" />
           Loan Breakdown
         </div>
         <div className="grid grid-cols-2 gap-3">
@@ -223,7 +223,7 @@ function LoanSection({ loan }: { loan: NonNullable<AnalyzeResponse["terms"]["loa
         <div className="pt-2 border-t border-slate-100 space-y-2">
           <div className="flex justify-between items-center text-xs font-semibold text-slate-700">
             <span>Prepay after month {exitMonth}</span>
-            <span className="text-teal-700 font-bold">{exitMonth} of {loan.tenureMonths} mo</span>
+            <span className="text-indigo-700 font-bold">{exitMonth} of {loan.tenureMonths} mo</span>
           </div>
           <input
             type="range"
@@ -231,7 +231,7 @@ function LoanSection({ loan }: { loan: NonNullable<AnalyzeResponse["terms"]["loa
             max={loan.tenureMonths - 1}
             value={exitMonth}
             onChange={(e) => setExitMonth(Number(e.target.value))}
-            className="w-full accent-teal-600"
+            className="w-full accent-indigo-600"
           />
           <div className="grid grid-cols-2 gap-3 pt-1">
             <div className="bg-emerald-50 rounded-xl p-3 text-center">
@@ -286,7 +286,7 @@ function SubscriptionSection({ sub }: { sub: NonNullable<AnalyzeResponse["terms"
       </div>
       <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-3">
         <div className="flex items-center gap-2 text-sm font-bold text-slate-800">
-          <DollarSign className="h-4 w-4 text-teal-600" />
+          <DollarSign className="h-4 w-4 text-indigo-600" />
           Subscription Breakdown
         </div>
         <div className="grid grid-cols-2 gap-3">
@@ -340,7 +340,7 @@ function RentalSection({ rental }: { rental: NonNullable<AnalyzeResponse["terms"
       </div>
       <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-3">
         <div className="flex items-center gap-2 text-sm font-bold text-slate-800">
-          <DollarSign className="h-4 w-4 text-teal-600" />
+          <DollarSign className="h-4 w-4 text-indigo-600" />
           Rental Breakdown
         </div>
         <div className="grid grid-cols-2 gap-3">
@@ -375,7 +375,7 @@ function RentalSection({ rental }: { rental: NonNullable<AnalyzeResponse["terms"
           <div className="pt-2 border-t border-slate-100 space-y-2">
             <div className="flex justify-between items-center text-xs font-semibold text-slate-700">
               <span>Exit after month {exitMonth}</span>
-              <span className="text-teal-700 font-bold">{exitMonth} of {rental.lockInMonths} mo</span>
+              <span className="text-indigo-700 font-bold">{exitMonth} of {rental.lockInMonths} mo</span>
             </div>
             <input
               type="range"
@@ -383,7 +383,7 @@ function RentalSection({ rental }: { rental: NonNullable<AnalyzeResponse["terms"
               max={rental.lockInMonths - 1}
               value={exitMonth}
               onChange={(e) => setExitMonth(Number(e.target.value))}
-              className="w-full accent-teal-600"
+              className="w-full accent-indigo-600"
             />
             <div className="grid grid-cols-2 gap-3 pt-1">
               <div className="bg-amber-50 rounded-xl p-3 text-center">
@@ -422,7 +422,7 @@ export default function DatesCostsPanel({ result }: DatesCostsPanelProps) {
       {/* Deadlines */}
       <section>
         <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-2">
-          <Calendar className="h-4 w-4 text-teal-700" />
+          <Calendar className="h-4 w-4 text-indigo-700" />
           Key Deadlines
         </h3>
         <DeadlinesSection result={result} />
@@ -431,7 +431,7 @@ export default function DatesCostsPanel({ result }: DatesCostsPanelProps) {
       {/* Costs */}
       <section>
         <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-2">
-          <DollarSign className="h-4 w-4 text-teal-700" />
+          <DollarSign className="h-4 w-4 text-indigo-700" />
           Financial Summary
         </h3>
         {!hasTerms ? (

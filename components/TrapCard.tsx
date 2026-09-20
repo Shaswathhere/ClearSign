@@ -72,10 +72,10 @@ export default function TrapCard({ trap, onShowInDocument }: TrapCardProps) {
         </div>
 
         <div>
-          <span className="font-bold text-slate-800 uppercase tracking-wide text-[10px] text-teal-800 block">
+          <span className="font-bold text-slate-800 uppercase tracking-wide text-[10px] text-indigo-800 block">
             What to do:
           </span>
-          <p className="text-teal-950 font-medium leading-relaxed mt-0.5">{trap.action}</p>
+          <p className="text-indigo-950 font-medium leading-relaxed mt-0.5">{trap.action}</p>
         </div>
       </div>
 
@@ -84,7 +84,7 @@ export default function TrapCard({ trap, onShowInDocument }: TrapCardProps) {
         <button
           type="button"
           onClick={() => onShowInDocument?.(trap.clauseId)}
-          className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-teal-50 hover:text-teal-800 transition-colors min-h-[44px]"
+          className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-indigo-50 hover:text-indigo-800 transition-colors min-h-[44px]"
         >
           <span>Show in document [{trap.clauseId}]</span>
           <ExternalLink className="h-3.5 w-3.5" />
